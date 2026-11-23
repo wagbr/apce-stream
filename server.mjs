@@ -11,12 +11,14 @@ import { createMediaLibrary, serveMediaFile } from './media-library.mjs';
 import {createBroadcastControl} from './broadcast-control.mjs';
 import {createRoomControl} from './room-control.mjs';
 import {createCommentControl} from './comment-control.mjs';
+import {persistentOAuthFile} from './oauth-storage.mjs';
+import {createOAuthBroker} from './oauth-broker.mjs';
 import crypto from 'node:crypto';
 
 const BASE = path.dirname(fileURLToPath(import.meta.url));
 const cfgPath = path.join(BASE, 'private/studio.json');
 const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-const youtubeScheduler = createYouTubeScheduler({base:BASE,port:cfg.port});
+const youtubeScheduler = createYouTubeScheduler({base:BASE,port:cfg.port,authFile:persistentOAuthFile(BASE),broker:createOAuthBroker({port:cfg.port})});
 const obs = new OBSWebSocket();
 let connected = false, connecting = false, lastError = '', introArmed = false;
 let snapshot = null, snapshotAt = 0;
@@ -296,7 +298,7 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, await routes[url.pathname](data));
     }
     if (req.method !== 'GET') return json(res, 405, {error:'Método não permitido.'});
-    if(url.pathname==='/api/health')return json(res,200,{ok:true,app:'APCE Studio'});
+    if(url.pathname==='/api/health')return json(res,200,{ok:true,app:'APCE Studio',instance:crypto.createHash('sha256').update(BASE.toLowerCase()).digest('hex').slice(0,16)});
     if(url.pathname==='/api/chat/state')return json(res,200,comments.state());
     if(url.pathname==='/api/chat/overlay')return json(res,200,comments.overlay());
     if(url.pathname==='/api/broadcast/state')return json(res,200,await broadcasts.state());

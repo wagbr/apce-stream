@@ -11,7 +11,7 @@ def git(*args):
     return subprocess.check_output(['git', *args], cwd=base)
 
 paths = [p.decode('utf-8') for p in git('ls-files', '-z').split(b'\0') if p]
-blocked = {'private', 'obs', 'vendor', 'node_modules', 'evidencias', 'backups', 'downloads', 'gravacoes', 'Biblioteca de mídias', '__pycache__'}
+blocked = {'private', 'obs', 'runtime', 'vendor', 'node_modules', 'evidencias', 'backups', 'downloads', 'gravacoes', 'Biblioteca de mídias', '__pycache__'}
 binary = {'.png', '.jpg', '.jpeg', '.webp', '.mp4'}
 patterns = [
     rb'-----BEGIN(?: [A-Z]+)? PRIVATE KEY-----',

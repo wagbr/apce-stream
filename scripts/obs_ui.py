@@ -3,11 +3,15 @@ import ctypes
 import os
 import pathlib
 import sys
+import importlib.util
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
 VENDOR = BASE / 'vendor'
-sys.path[:0] = [str(VENDOR), str(VENDOR/'win32'), str(VENDOR/'win32/lib'), str(VENDOR/'Pythonwin'), str(VENDOR/'pywin32_system32')]
-_dll = os.add_dll_directory(str(VENDOR/'pywin32_system32')) if (VENDOR/'pywin32_system32').is_dir() else None
+_dll = None
+if importlib.util.find_spec('pywinauto') is None:
+    sys.path[:0] = [str(VENDOR), str(VENDOR/'win32'), str(VENDOR/'win32/lib'), str(VENDOR/'Pythonwin'), str(VENDOR/'pywin32_system32')]
+    if (VENDOR/'pywin32_system32').is_dir():
+        _dll = os.add_dll_directory(str(VENDOR/'pywin32_system32'))
 from pywinauto import Desktop, Application
 
 def windows():

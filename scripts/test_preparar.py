@@ -30,6 +30,9 @@ class PrepararTest(unittest.TestCase):
         assets.mkdir(parents=True)
         for name in ['apce.png', 'ateucast.png']:
             (assets / name).write_bytes(b'fixture-image')
+        (self.base / 'move-transition.json').write_text(json.dumps({
+            'name': 'APCE Move', 'id': 'move_transition', 'settings': {'switch_point': 50}
+        }), encoding='utf-8')
 
     def prepare(self):
         with contextlib.redirect_stdout(io.StringIO()):
@@ -50,6 +53,10 @@ class PrepararTest(unittest.TestCase):
         self.assertEqual(service['type'], 'rtmp_custom')
         self.assertEqual(service['settings']['key'], '')
         self.assertIn('ProfileDir=APCE_Painel', (self.module.CONFIG / 'user.ini').read_text(encoding='utf-8'))
+        collection = json.loads((self.module.CONFIG / 'basic/scenes/APCE.json').read_text(encoding='utf-8'))
+        self.assertEqual(collection['transitions'][0]['id'], 'move_transition')
+        self.assertEqual(collection['current_transition'], 'APCE Move')
+        self.assertEqual(collection['transition_duration'], 650)
 
     def test_second_run_preserves_existing_settings_and_tokens(self):
         self.prepare()
@@ -57,9 +64,12 @@ class PrepararTest(unittest.TestCase):
         before = settings.read_bytes()
         profile = self.module.CONFIG / 'basic/profiles/APCE_Painel/basic.ini'
         original = profile.read_bytes()
+        collection = self.module.CONFIG / 'basic/scenes/APCE.json'
+        original_collection = collection.read_bytes()
         self.prepare()
         self.assertEqual(settings.read_bytes(), before)
         self.assertEqual(profile.read_bytes(), original)
+        self.assertEqual(collection.read_bytes(), original_collection)
 
     def test_original_obs_auth_is_not_copied_to_panel(self):
         profile = self.module.CONFIG / 'basic/profiles/APCE'

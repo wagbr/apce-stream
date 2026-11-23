@@ -4,6 +4,7 @@ import json
 import pathlib
 import secrets
 import shutil
+import uuid
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
 ROOT = BASE.parent
@@ -101,7 +102,12 @@ def prepare():
     write_json(CONFIG / 'plugin_config' / 'obs-websocket' / 'config.json', {'alerts_enabled': False, 'auth_required': True, 'first_load': False, 'server_enabled': True, 'server_port': cfg['obsPort'], 'server_password': cfg['obsPassword']})
     collection = CONFIG / 'basic' / 'scenes' / 'APCE.json'
     if not collection.exists():
-        write_json(collection, {'name': 'APCE', 'current_scene': '00 · Preparação', 'current_program_scene': '00 · Preparação', 'scene_order': [{'name': '00 · Preparação'}], 'sources': [{'name': '00 · Preparação', 'id': 'scene', 'versioned_id': 'scene', 'settings': {'items': []}}], 'groups': [], 'transitions': [], 'current_transition': 'Fade', 'transition_duration': 300})
+        transitions = []
+        move_file = BASE / 'move-transition.json'
+        if move_file.is_file():
+            move = json.loads(move_file.read_text(encoding='utf-8'))
+            transitions.append({'name': move['name'], 'uuid': str(uuid.uuid4()), 'id': move['id'], 'versioned_id': move['id'], 'settings': move['settings']})
+        write_json(collection, {'name': 'APCE', 'current_scene': '00 · Preparação', 'current_program_scene': '00 · Preparação', 'scene_order': [{'name': '00 · Preparação'}], 'sources': [{'name': '00 · Preparação', 'id': 'scene', 'versioned_id': 'scene', 'settings': {'items': []}}], 'groups': [], 'transitions': transitions, 'current_transition': transitions[0]['name'] if transitions else 'Fade', 'transition_duration': 650 if transitions else 300})
     print('Configuração portátil preparada. Credenciais preservadas em private/studio.json.')
 
 if __name__ == '__main__':

@@ -105,3 +105,16 @@ test('recusa de consentimento preserva o código de erro útil ao usuário',asyn
 test('JSON instalado sem retorno de computador é rejeitado antes do login',async t=>{
   const {scheduler:s,state}=fixture(t);await assert.rejects(s.importCredentials({installed:{client_id:credentials.installed.client_id}}),{code:'CLIENT_TYPE_REQUIRED'});assert.equal((await s.status()).clientConfigured,false);assert.equal(state.calls.length,0);
 });
+
+test('migra OAuth legado para armazenamento persistente e reutiliza em outra instalação',async t=>{
+  const f=fixture(t);await f.login();
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'apce-persistent-test-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const authFile=path.join(root,'user-data/youtube/connection.dpapi');
+  const migrated=createYouTubeScheduler({...f.opts,authFile});assert.equal((await migrated.status()).connected,true);assert(fs.existsSync(authFile));
+  assert(fs.existsSync(path.join(f.dir,'private/youtube/connection.dpapi')));
+  const clean=path.join(root,'new-install');fs.mkdirSync(clean);
+  const reinstalled=createYouTubeScheduler({...f.opts,base:clean,authFile});
+  const status=await reinstalled.status();assert(status.clientConfigured);assert(status.connected);assert.equal(status.account.handle,'@apcedf');
+  assert(!JSON.stringify(status).includes('test-secret-only'));
+  await reinstalled.disconnect();assert.equal((await reinstalled.status()).connected,false);assert.equal((await reinstalled.status()).clientConfigured,true);
+});

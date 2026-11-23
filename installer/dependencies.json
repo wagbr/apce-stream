@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "platform": "windows-x64",
+  "pythonVersion": "3.14.10",
+  "packages": {
+    "node": {
+      "version": "24.22.3",
+      "url": "https://nodejs.org/dist/v24.22.3/node-v24.22.3-win-x64.zip",
+      "sha256": "e612af99f626ab415ea225af6bce5c971feb448cb5cae250bb1c3fa50c5f7d9f",
+      "file": "node-v24.22.3-win-x64.zip"
+    },
+    "uv": {
+      "version": "0.13.9",
+      "url": "https://github.com/astral-sh/uv/releases/download/0.13.9/uv-x86_64-pc-windows-msvc.zip",
+      "sha256": "edd61f7f5728a56cc62455386661860bdfc7bab65872f39b0c25bdcc1d8e1beb",
+      "file": "uv-0.13.9.zip"
+    },
+    "obs": {
+      "version": "33.0.1",
+      "url": "https://github.com/obsproject/obs-studio/releases/download/33.0.1/OBS-Studio-33.0.1-Windows-x64.zip",
+      "sha256": "0d9436451c2d772b33428e3fdae9776f071895c335de17283176306fb72651d3",
+      "file": "OBS-Studio-33.0.1-Windows-x64.zip",
+      "legacyCache": "downloads/obs.zip"
+    },
+    "move": {
+      "version": "3.2.2",
+      "url": "https://github.com/exeldro/obs-move-transition/releases/download/3.2.2/move-transition-3.2.2-windows-OBS33.zip",
+      "sha256": "a7b14030bf525024644e0510fb4254db40c46378358adaac3a68cd23d7e99f8e",
+      "file": "move-transition-3.2.2-windows-OBS33.zip",
+      "legacyCache": "downloads/move/move-transition-3.2.2-windows-OBS33.zip"
+    },
+    "ninja": {
+      "version": "1.1.85",
+      "url": "https://github.com/steveseguin/ninja-obs-plugin/releases/download/v1.1.85/obs-vdoninja-windows-x64.zip",
+      "sha256": "41cc34815e38bf81137229c46ca4c5336d80e7254b982da362e9955e562cce09",
+      "file": "obs-vdoninja-1.1.85.zip",
+      "legacyCache": "downloads/ninja.zip"
+    },
+    "ffmpeg": {
+      "version": "9.1",
+      "url": "https://github.com/GyanD/codexffmpeg/releases/download/9.1/ffmpeg-9.1-essentials_build.zip",
+      "sha256": "b9bbbb3acece000cbeec994f856649354e52c773807841e78908374b24d658fd",
+      "file": "ffmpeg-9.1-essentials_build.zip"
+    }
+  }
+}

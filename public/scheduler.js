@@ -24,6 +24,14 @@ document.querySelector('main').insertAdjacentHTML('beforeend',`
 const oauthHelp=document.querySelector('#scheduler-setup .connection-steps').children[1];
 oauthHelp.querySelector('p').innerHTML='Configure o nome do app e o público. Em teste, adicione seu e-mail aos usuários de teste. Crie um cliente <strong>Aplicativo Web</strong> com os endereços abaixo e baixe o JSON completo. O painel também aceita <strong>Aplicativo para computador</strong>.';
 oauthHelp.insertAdjacentHTML('beforeend','<div class="oauth-addresses"><label>Origem JavaScript autorizada <small>(opcional neste fluxo)</small><input id="scheduler-origin" readonly value="http://127.0.0.1:3210" aria-label="Origem JavaScript autorizada"></label><label>URI de redirecionamento autorizada — cliente Web<input id="scheduler-web-redirect" readonly value="http://127.0.0.1:3210/api/youtube/callback" aria-label="URI de redirecionamento autorizada"></label><p>Use os endereços exatamente como estão. Preserve as outras URLs que já existirem no cliente Google.</p><p id="scheduler-active-redirect"></p></div>');
+const oauthAdminSteps=Array.from(document.querySelector('#scheduler-setup .connection-steps').children).slice(0,3);
+document.querySelector('#scheduler-setup .connection-steps').insertAdjacentHTML('beforebegin','<p id="scheduler-persistent-note" hidden>A configuração Google já está salva neste usuário do Windows. Reinstalar a aplicação não exige importar o JSON novamente.</p>');
+document.querySelector('#scheduler-setup .connection-steps').insertAdjacentHTML('afterend','<button id="scheduler-advanced" class="text-button" type="button" hidden aria-expanded="false">Alterar configuração Google</button>');
+function showOAuthAdministration(show){
+  oauthAdminSteps.forEach(step=>step.hidden=!show);
+  $('scheduler-advanced').setAttribute('aria-expanded',String(show));
+}
+$('scheduler-advanced').onclick=()=>showOAuthAdministration($('scheduler-advanced').getAttribute('aria-expanded')!=='true');
 let connection=null,thumb=null,requestId=crypto.randomUUID(),sending=false,draftTimer,connectionTimer,remoteLoaded=false,result=null;
 const form=$('schedule-form');
 const privacyLabels={public:'Pública',unlisted:'Não listada',private:'Privada'};
@@ -89,23 +97,27 @@ async function retry(id,button){button.disabled=true;try{const r=await api('retr
 async function refreshConnection(){try{
   connection=await api('state');const connected=connection.connected;
   text('scheduler-channel-name',connected?connection.account.title:'YouTube · @apcedf');text('scheduler-connection-text',connected?'@apcedf · conectado ao agendador':connection.error||'Conecte o painel para enviar os agendamentos.');
-  $('scheduler-connect').hidden=connected;$('scheduler-disconnect').hidden=!connected;$('scheduler-login').disabled=!connection.clientConfigured;
-  text('scheduler-client-status',connection.clientConfigured?`JSON OAuth importado: ${connection.clientType==='web'?'Aplicativo Web':'cliente instalado'}. Protegido pelo Windows.`:'As credenciais ficam protegidas pelo Windows.');
+  $('scheduler-connect').hidden=connected;$('scheduler-disconnect').hidden=!connected;$('scheduler-login').disabled=!connection.clientConfigured&&!connection.centralAuth;
+  $('scheduler-persistent-note').hidden=!connection.clientConfigured;$('scheduler-advanced').hidden=!!connection.centralAuth||!connection.clientConfigured;
+  document.querySelector('#scheduler-setup > p').innerHTML=connection.centralAuth?'Entre com a conta Google que administra o canal <strong>@apcedf</strong> e autorize o acesso solicitado.':'A conexão do painel é independente do login do OBS. Use um projeto Google da APCE e autorize o canal <strong>@apcedf</strong>.';
+  text('scheduler-persistent-note',connection.clientType==='broker'?'A conexão Google é fornecida pelo App APCE. Basta autorizar o canal; não é necessário importar JSON, inclusive em computadores novos.':'A configuração Google já está salva neste usuário do Windows. Reinstalar a aplicação não exige importar o JSON novamente.');
+  showOAuthAdministration(!connection.centralAuth&&(!connection.clientConfigured||$('scheduler-advanced').getAttribute('aria-expanded')==='true'));
+  text('scheduler-client-status',connection.clientConfigured?'Configuração Google disponível e protegida pelo Windows. Use Conectar YouTube para autorizar o canal.':'A identidade Google precisa ser configurada uma vez pelo responsável pela distribuição.');
   if(connection.oauth){$('scheduler-origin').value=connection.oauth.origin;$('scheduler-web-redirect').value=connection.oauth.webRedirectUri;text('scheduler-active-redirect',connection.clientConfigured?'Retorno usado pelo cliente importado: '+connection.oauth.redirectUri:'');}
   if(connection.error&&$('scheduler-setup').open)errorMessage('scheduler-setup-message',(connection.errorCode?'Erro '+connection.errorCode+': ':'')+connection.error);
   $('schedule-submit').disabled=sending||!connected;$('schedule-refresh').disabled=!connected;renderEvents();
-  if(connected){clearInterval(connectionTimer);if(!remoteLoaded){remoteLoaded=true;await refreshUpcoming();}}
+  if(connected&&!connection.connecting&&!connection.busy&&!connection.error){clearInterval(connectionTimer);if(!remoteLoaded){remoteLoaded=true;await refreshUpcoming();}}
 }catch(error){errorMessage('schedule-list-message',error.message);}}
 async function refreshUpcoming(){const b=$('schedule-refresh');b.disabled=true;try{const result=await api('refresh',{});connection.upcoming=result.upcoming;errorMessage('schedule-list-message','Agenda consultada diretamente no YouTube.',false);renderEvents();}catch(error){errorMessage('schedule-list-message',error.message);}finally{b.disabled=!connection?.connected;}}
 $('schedule-refresh').onclick=refreshUpcoming;
 function openSetup(){text('scheduler-setup-message','');$('scheduler-setup').showModal();refreshConnection();}
-$('scheduler-connect').onclick=openSetup;$('scheduler-settings').onclick=openSetup;$('scheduler-close').onclick=()=>$('scheduler-setup').close();
+$('scheduler-connect').onclick=()=>{if(connection?.clientConfigured||connection?.centralAuth){openSetup();$('scheduler-login').click();}else openSetup();};$('scheduler-settings').onclick=openSetup;$('scheduler-close').onclick=()=>$('scheduler-setup').close();
 $('scheduler-oauth-file').onchange=async e=>{
   const file=e.target.files[0];if(!file)return;try{if(file.size>65536)throw Error('Escolha o JSON OAuth baixado do Google Cloud.');let credentials;try{credentials=JSON.parse(await file.text());}catch{throw Error('O arquivo não contém um JSON válido.');}await api('credentials',{credentials});remoteLoaded=false;await refreshConnection();errorMessage('scheduler-setup-message','Credencial importada. Agora clique em Conectar YouTube.',false);}catch(error){errorMessage('scheduler-setup-message',error.message);}finally{e.target.value='';}
 };
 $('scheduler-login').onclick=async()=>{
   const popup=window.open('about:blank','apce-youtube-login','width=700,height=780');
-  try{const data=await api('connect',{});if(popup)popup.location=data.url;else{window.location.href=data.url;return;}errorMessage('scheduler-setup-message','Conclua o login do Google e escolha @apcedf na janela aberta.',false);clearInterval(connectionTimer);const deadline=Date.now()+10*60000;connectionTimer=setInterval(async()=>{await refreshConnection();if(connection?.connected){popup.close();text('scheduler-setup-message','Canal APCE conectado. Você já pode agendar.');$('scheduler-setup').close();}else if((connection?.error&&!connection.connecting)||Date.now()>deadline){clearInterval(connectionTimer);errorMessage('scheduler-setup-message',connection?.error||'Este login expirou. Clique em Conectar YouTube para tentar novamente.');}},4000);}catch(error){popup?.close();errorMessage('scheduler-setup-message',error.message);}
+  try{const data=await api('connect',{});if(popup)popup.location=data.url;else{window.location.href=data.url;return;}errorMessage('scheduler-setup-message','Conclua o login do Google e escolha @apcedf na janela aberta.',false);clearInterval(connectionTimer);const deadline=Date.now()+10*60000;connectionTimer=setInterval(async()=>{await refreshConnection();if(connection?.connected&&!connection.connecting&&!connection.busy&&!connection.error){popup.close();text('scheduler-setup-message','Canal APCE conectado. Você já pode agendar.');$('scheduler-setup').close();}else if((connection?.error&&!connection.connecting&&!connection.busy)||Date.now()>deadline){clearInterval(connectionTimer);errorMessage('scheduler-setup-message',connection?.error||'Este login expirou. Clique em Conectar YouTube para tentar novamente.');}},4000);}catch(error){popup?.close();errorMessage('scheduler-setup-message',error.message);}
 };
 $('scheduler-disconnect').onclick=async()=>{try{await api('disconnect',{});remoteLoaded=false;await refreshConnection();errorMessage('scheduler-setup-message','Agendador desconectado. O login do OBS continua independente.',false);}catch(error){errorMessage('scheduler-setup-message',error.message);}};
 try{const draft=await draftStore();if(draft){for(const key of ['title','description','startLocal','privacy'])if(typeof draft[key]==='string')form.elements[key].value=draft[key];if(['yes','no'].includes(draft.audience))form.elements.audience.value=draft.audience;thumb=draft.thumb||null;requestId=draft.requestId||requestId;if(draft.result)showResult(draft.result);}}catch{text('schedule-draft-status','O navegador não permitiu restaurar o rascunho.');}

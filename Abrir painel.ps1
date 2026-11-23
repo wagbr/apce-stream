@@ -1,6 +1,8 @@
 ﻿param([switch]$SemAbrirNavegador)
 $ErrorActionPreference = 'Stop'
 $studioPath = $PSScriptRoot
+. (Join-Path $studioPath 'scripts\runtime.ps1')
+Enable-APCERuntime $studioPath
 $panelUrl = 'http://127.0.0.1:3210'
 
 function Test-PainelAPCE {
@@ -17,7 +19,7 @@ try {
     if (-not $lockAcquired) { throw 'O painel já está sendo iniciado. Tente novamente em alguns segundos.' }
     if (-not (Test-PainelAPCE)) {
         $nodePath = (Get-Command node.exe -ErrorAction Stop).Source
-        Start-Process -FilePath $nodePath -ArgumentList 'server.mjs' -WorkingDirectory $studioPath -WindowStyle Hidden -RedirectStandardOutput (Join-Path $studioPath 'server.log') -RedirectStandardError (Join-Path $studioPath 'server-error.log')
+        Start-Process -FilePath $nodePath -ArgumentList ('"' + (Join-Path $studioPath 'server.mjs') + '"') -WorkingDirectory $studioPath -WindowStyle Hidden -RedirectStandardOutput (Join-Path $studioPath 'server.log') -RedirectStandardError (Join-Path $studioPath 'server-error.log')
         $deadline = [DateTime]::UtcNow.AddSeconds(15)
         do {
             Start-Sleep -Milliseconds 250

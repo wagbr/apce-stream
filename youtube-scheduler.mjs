@@ -61,17 +61,38 @@ const googleMessages={
 };
 function safeEvent(item){return {id:item.id,title:item.snippet?.title||'',description:item.snippet?.description||'',scheduledStartTime:item.snippet?.scheduledStartTime||'',privacy:item.status?.privacyStatus||'private',lifeCycleStatus:item.status?.lifeCycleStatus||'',thumbnail:item.snippet?.thumbnails?.medium?.url||'',url:`https://www.youtube.com/watch?v=${item.id}`,studioUrl:`https://studio.youtube.com/video/${item.id}/livestreaming`};}
 
-export function createYouTubeScheduler({base,port,fetchImpl=fetch,clock=()=>Date.now(),protect,unprotect,watchChat=openYouTubeChat}={}){
-  const dir=path.join(base,'private/youtube'),authFile=path.join(dir,'connection.dpapi'),journalFile=path.join(dir,'schedules.json');
+export function createYouTubeScheduler({base,port,fetchImpl=fetch,clock=()=>Date.now(),protect,unprotect,watchChat=openYouTubeChat,authFile:externalAuthFile,broker=null}={}){
+  const dir=path.join(base,'private/youtube'),legacyAuthFile=path.join(dir,'connection.dpapi'),authFile=externalAuthFile||legacyAuthFile,journalFile=path.join(dir,'schedules.json');
   let auth=null,loaded=false,loading=null,pending=null,authError='',authErrorCode='',refreshing=null,listing=null,listCache=null,listAt=0,busy=false,oauthBusy=false;
   const origin=`http://127.0.0.1:${port}`;
-  const redirectUri=()=>auth?.credentials?.type==='web'?`${origin}/api/youtube/callback`:`${origin}/`;
-  const clientReady=()=>!!auth?.credentials&&(auth.credentials.type==='web'||auth.credentials.desktopLoopback===true);
+  const redirectFor=credentials=>['web','broker'].includes(credentials?.type)?`${origin}/api/youtube/callback`:`${origin}/`;
+  const redirectUri=()=>redirectFor(auth?.credentials);
+  const clientReady=()=>!!auth?.credentials&&(['web','broker'].includes(auth.credentials.type)||auth.credentials.desktopLoopback===true);
   const clientWarning='O JSON importado não confirma um cliente de computador com retorno local. Importe o JSON completo de um cliente Aplicativo Web ou Aplicativo para computador criado para este painel.';
   let journal=read(journalFile,{});
   const secure=protect||((s)=>dpapi(base,'protect',s));const unlock=unprotect||((s)=>dpapi(base,'unprotect',s));
   const saveJournal=()=>atomic(journalFile,JSON.stringify(journal,null,2));
-  async function load(){if(loaded)return;if(loading)return loading;loading=(async()=>{if(fs.existsSync(authFile)){try{auth=JSON.parse(await unlock(fs.readFileSync(authFile,'utf8')));}catch{authError='Reconecte o YouTube neste usuário do Windows.';}}loaded=true;})();return loading;}
+  let brokerAttempt=-Infinity;
+  async function prepareBroker(){
+    if(!broker||auth?.credentials||clock()-brokerAttempt<30000)return;
+    brokerAttempt=clock();
+    try{auth={credentials:await broker.credentials(),tokens:null,account:null};await saveAuth();authError='';}
+    catch(e){authError=e.message;}
+  }
+  async function load(){
+    if(loaded)return;if(loading)return loading;
+    loading=(async()=>{
+      const source=fs.existsSync(authFile)?authFile:legacyAuthFile;
+      if(fs.existsSync(source)){
+        try{
+          const encrypted=fs.readFileSync(source,'utf8');auth=JSON.parse(await unlock(encrypted));
+          if(!auth||typeof auth!=='object'||Array.isArray(auth))throw Error('Armazenamento inválido');
+          if(source!==authFile)atomic(authFile,encrypted);
+        }catch{auth=null;authError='Reconecte o YouTube neste usuário do Windows.';}
+      }
+      await prepareBroker();loaded=true;
+    })();return loading;
+  }
   async function saveAuth(){atomic(authFile,await secure(JSON.stringify(auth)));}
   async function httpJSON(url,options={}){
     let response;try{response=await fetchImpl(url,{...options,signal:AbortSignal.timeout(30000)});}catch{throw fail('Não foi possível confirmar a resposta do YouTube. Confira sua conexão.','NETWORK',502);}
@@ -92,10 +113,12 @@ export function createYouTubeScheduler({base,port,fetchImpl=fetch,clock=()=>Date
     if(refreshing)return refreshing;
     refreshing=(async()=>{
       try{
-        const data=await httpJSON('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:auth.credentials.client_id,...(auth.credentials.client_secret?{client_secret:auth.credentials.client_secret}:{}),refresh_token:auth.tokens.refresh_token,grant_type:'refresh_token'})});
+        const data=auth.credentials.type==='broker'
+          ?await broker.refresh(auth.tokens)
+          :await httpJSON('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:auth.credentials.client_id,...(auth.credentials.client_secret?{client_secret:auth.credentials.client_secret}:{}),refresh_token:auth.tokens.refresh_token,grant_type:'refresh_token'})});
         if(!data.access_token)throw fail('Conecte novamente o YouTube.','AUTH_REQUIRED',401);
         auth.tokens={...auth.tokens,...data,expires_at:clock()+Number(data.expires_in||3600)*1000};await saveAuth();authError='';return auth.tokens.access_token;
-      }catch(e){if(e.code==='YOUTUBE_ERROR'||e.code==='AUTH_REQUIRED'){auth.tokens=null;authError='A autorização expirou ou foi revogada. Conecte novamente.';await saveAuth();throw fail(authError,'AUTH_REQUIRED',401);}throw e;}
+      }catch(e){if(['YOUTUBE_ERROR','AUTH_REQUIRED','invalid_grant'].includes(e.code)){auth.tokens=null;authError='A autorização expirou ou foi revogada. Conecte novamente.';await saveAuth();throw fail(authError,'AUTH_REQUIRED',401);}throw e;}
       finally{refreshing=null;}
     })();return refreshing;
   }
@@ -111,7 +134,7 @@ export function createYouTubeScheduler({base,port,fetchImpl=fetch,clock=()=>Date
     return auth.account;
   }
   function publicRecord(r){return {requestId:r.requestId,id:r.id||'',title:r.title,scheduledStartTime:r.scheduledStartTime,privacy:r.privacy,phase:r.phase,error:r.error||'',url:r.id?`https://www.youtube.com/watch?v=${r.id}`:'',studioUrl:r.id?`https://studio.youtube.com/video/${r.id}/livestreaming`:'https://studio.youtube.com',thumbnailReady:r.phase==='complete'};}
-  async function status(){await load();const incompatible=!!auth?.credentials&&!clientReady()&&!auth?.tokens;return {clientConfigured:clientReady(),clientType:auth?.credentials?.type||'installed',oauth:{origin,redirectUri:redirectUri(),webRedirectUri:`${origin}/api/youtube/callback`,scope:SCOPE},connected:!!auth?.tokens&&!!auth?.account,account:auth?.tokens?auth.account:null,error:authError||(incompatible?clientWarning:''),errorCode:authErrorCode||(incompatible?'CLIENT_TYPE_REQUIRED':''),connecting:!!pending&&pending.expires>clock(),busy:busy||oauthBusy,events:Object.values(journal).map(publicRecord).sort((a,b)=>b.scheduledStartTime.localeCompare(a.scheduledStartTime)),upcoming:listCache||[]};}
+  async function status(){await load();await prepareBroker();const incompatible=!!auth?.credentials&&!clientReady()&&!auth?.tokens;return {clientConfigured:clientReady(),clientType:auth?.credentials?.type||'installed',centralAuth:!!broker,oauth:{origin,redirectUri:redirectUri(),webRedirectUri:`${origin}/api/youtube/callback`,scope:SCOPE},connected:!!auth?.tokens&&!!auth?.account,account:auth?.tokens?auth.account:null,error:authError||(incompatible?clientWarning:''),errorCode:authErrorCode||(incompatible?'CLIENT_TYPE_REQUIRED':''),connecting:!!pending&&pending.expires>clock(),busy:busy||oauthBusy,events:Object.values(journal).map(publicRecord).sort((a,b)=>b.scheduledStartTime.localeCompare(a.scheduledStartTime)),upcoming:listCache||[]};}
   async function importCredentials(data){
     await load();if(busy||oauthBusy)throw fail('Aguarde a operação em andamento.','BUSY',409);
     const type=data?.web?'web':'installed',c=data?.web||data?.installed;
@@ -123,12 +146,13 @@ export function createYouTubeScheduler({base,port,fetchImpl=fetch,clock=()=>Date
     oauthBusy=true;try{auth={credentials:{type,...(desktopLoopback?{desktopLoopback:true}:{}),client_id:c.client_id,...(c.client_secret?{client_secret:c.client_secret}:{})},tokens:null,account:null};pending=null;authError='';authErrorCode='';listCache=null;await saveAuth();return {ok:true};}finally{oauthBusy=false;}
   }
   async function beginAuth(){
-    await load();if(!auth?.credentials)throw fail('Importe primeiro o arquivo JSON OAuth do Google.','CLIENT_REQUIRED');
+    await load();await prepareBroker();if(!auth?.credentials)throw fail(broker?'O serviço de conexão da APCE está indisponível. Tente novamente.':'Importe primeiro o arquivo JSON OAuth do Google.','CLIENT_REQUIRED');
     if(!clientReady())throw fail(clientWarning,'CLIENT_TYPE_REQUIRED');
     if(busy||oauthBusy)throw fail('Aguarde a operação em andamento.','BUSY',409);
     const verifier=crypto.randomBytes(48).toString('base64url'),state=crypto.randomBytes(32).toString('base64url');
-    pending={verifier,state,redirectUri:redirectUri(),expires:clock()+10*60000};authError='';authErrorCode='';
-    const params=new URLSearchParams({client_id:auth.credentials.client_id,redirect_uri:pending.redirectUri,response_type:'code',scope:SCOPE,access_type:'offline',prompt:'consent select_account',state,code_challenge:crypto.createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'});
+    const credentials=broker?await broker.credentials():auth.credentials;
+    pending={verifier,state,credentials,redirectUri:redirectFor(credentials),expires:clock()+10*60000};authError='';authErrorCode='';
+    const params=new URLSearchParams({client_id:credentials.client_id,redirect_uri:pending.redirectUri,response_type:'code',scope:SCOPE,access_type:'offline',prompt:'consent select_account',state,code_challenge:crypto.createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'});
     return {url:'https://accounts.google.com/o/oauth2/v2/auth?'+params};
   }
   async function callback(params){
@@ -138,7 +162,9 @@ export function createYouTubeScheduler({base,port,fetchImpl=fetch,clock=()=>Date
     try{
       if(params.get('error'))throw Object.assign(fail(oauthMessages[params.get('error')]||'A conexão ao YouTube não foi autorizada. Tente novamente no agendador.','AUTH_REQUIRED'),{googleReason:oauthMessages[params.get('error')]?params.get('error'):'AUTH_REQUIRED'});
       const code=params.get('code');if(!code||code.length>4096)throw fail('O Google não retornou um código válido.');
-      const data=await httpJSON('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:auth.credentials.client_id,...(auth.credentials.client_secret?{client_secret:auth.credentials.client_secret}:{}),code,code_verifier:session.verifier,grant_type:'authorization_code',redirect_uri:session.redirectUri})});
+      const data=session.credentials.type==='broker'
+        ?await broker.exchange({code,verifier:session.verifier,redirectUri:session.redirectUri})
+        :await httpJSON('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:session.credentials.client_id,...(session.credentials.client_secret?{client_secret:session.credentials.client_secret}:{}),code,code_verifier:session.verifier,grant_type:'authorization_code',redirect_uri:session.redirectUri})});
       if(!data.access_token||!data.refresh_token)throw fail('O Google não concedeu acesso contínuo. Conecte novamente e autorize o acesso.','AUTH_REQUIRED');
       if(!String(data.scope||'').split(/\s+/).includes(SCOPE))throw fail('Autorize a permissão de acesso ao YouTube solicitada pelo agendador.','AUTH_REQUIRED');
       const headers={Authorization:`Bearer ${data.access_token}`};
@@ -146,7 +172,7 @@ export function createYouTubeScheduler({base,port,fetchImpl=fetch,clock=()=>Date
       const target=await httpJSON(API+'channels?part=snippet&forHandle=apcedf',{headers});
       const account=mine.items?.find(i=>i.id===target.items?.[0]?.id);
       if(!account)throw fail('O canal selecionado não é @apcedf. Conecte novamente e escolha o canal da APCE.','WRONG_CHANNEL');
-      auth.tokens={...data,expires_at:clock()+Number(data.expires_in||3600)*1000};auth.account={id:account.id,title:account.snippet.title,handle:'@apcedf'};authError='';authErrorCode='';listCache=null;await saveAuth();return {ok:true};
+      auth={credentials:session.credentials,tokens:{...data,expires_at:clock()+Number(data.expires_in||3600)*1000},account:{id:account.id,title:account.snippet.title,handle:'@apcedf'}};authError='';authErrorCode='';listCache=null;await saveAuth();return {ok:true};
     }catch(e){authError=e.message;authErrorCode=e.googleReason||e.code||'OAUTH_ERROR';throw e;}finally{oauthBusy=false;}
   }
   async function disconnect(){await load();if(busy||oauthBusy)throw fail('Aguarde a operação em andamento.','BUSY',409);if(auth){auth.tokens=null;auth.account=null;await saveAuth();}pending=null;listCache=null;authError='';return {ok:true};}

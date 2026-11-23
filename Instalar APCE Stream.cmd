@@ -1,0 +1,9 @@
+@echo off
+chcp 65001 >nul
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Instalar.ps1" %*
+if errorlevel 1 (
+  echo.
+  echo A instalacao nao foi concluida. Confira a mensagem acima.
+  pause
+  exit /b 1
+)

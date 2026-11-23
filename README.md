@@ -19,22 +19,19 @@ Os 12 lugares estão implementados, mas a operação real com 12 câmeras simult
 
 ## Instalação local
 
-1. Instale **Node.js 22 ou 24 LTS**, Python 3.12 ou superior, FFmpeg e FFprobe disponíveis no `PATH`. O código tem compatibilidade mínima com Node 20.11, mas essa versão já saiu do suporte.
-2. Baixe o ZIP do [OBS Studio](https://github.com/obsproject/obs-studio/releases) e extraia-o em `obs/`, de modo que exista `obs/bin/64bit/obs64.exe`. A instância original foi validada com OBS 33.0.1.
-3. Instale no OBS portátil os plugins [Move](https://github.com/exeldro/obs-move-transition/releases) e [VDO.Ninja](https://github.com/steveseguin/ninja-obs-plugin/releases). As versões validadas foram Move 3.2.2 para OBS 33 e VDO.Ninja 1.1.85. Siga a estrutura de arquivos de cada pacote para a instalação portátil.
-4. Na raiz deste repositório, execute:
+Baixe e extraia o repositório em uma pasta do **Windows x64**. Com internet disponível, execute este único comando nessa pasta, ou dê dois cliques no arquivo de mesmo nome:
 
 ```powershell
-npm ci
-python -m pip install -r requirements.txt
-npm run init:windows
+& '.\Instalar APCE Stream.cmd'
 ```
 
-5. Abra **Abrir Painel APCE.cmd**. Ele inicia o serviço local, o OBS no perfil **APCE Painel** e o navegador em `http://127.0.0.1:3210`.
-6. Em **Configurações → Reparar cenas**, prepare a coleção, com transmissão e gravação desligadas. Se o OBS ainda estiver iniciando, aguarde a indicação de conexão.
-7. Em **Agenda**, configure seu cliente OAuth Google e autorize o canal **@apcedf**. A conexão desta máquina não acompanha o clone. Consulte [Agendador de lives](Agendador%20de%20lives.md).
+O instalador baixa e prepara **Node.js, Python, FFmpeg/FFprobe, OBS, Move e VDO.Ninja**, instala as dependências JavaScript/Python, cria a configuração e abre o estúdio. Os runtimes ficam dentro da aplicação; não é necessário instalar Python ou Node antes. Caso falte o runtime Visual C++ da Microsoft, o Windows pedirá permissão para instalá-lo. Os pacotes têm versões fixas e SHA-256 conferido.
 
-A configuração inicial gera senhas e identificadores novos em `private/studio.json`, sem exibi-los. A abertura leve está em `media/abertura-leve.mp4`; os assets utilizados pelo painel e pelas cenas estão em `public/assets/`. O preparo preserva configurações existentes.
+Nas próximas utilizações, abra **Abrir Painel APCE.cmd**. Ele inicia o serviço local, o OBS no perfil **APCE Painel** e o navegador em `http://127.0.0.1:3210`. A instalação inicial prepara as cenas quando o OBS conecta. Se ainda estiver iniciando, use **Configurações → Reparar cenas**, com transmissão e gravação desligadas.
+
+**Nenhuma instalação precisa receber o JSON OAuth.** A identidade Google é fornecida pelo serviço central no App APCE; em computadores novos, use **Agenda → Conectar YouTube** e autorize o canal **@apcedf**. A chave privada do aplicativo fica na VM e não acompanha o repositório. Reinstalações no mesmo usuário do Windows também recuperam a conexão já autorizada de `%LOCALAPPDATA%\APCE Stream\youtube\connection.dpapi`, protegida pelo Windows e fora da pasta da aplicação. Se o Google exigir nova autorização, basta repetir o login. Consulte [Instalação e OAuth](docs/instalacao-windows.md).
+
+A configuração inicial gera senhas e identificadores novos em `private/studio.json`, sem exibi-los. A abertura leve está em `media/abertura-leve.mp4`; os assets utilizados pelo painel e pelas cenas estão em `public/assets/`. O preparo preserva configurações existentes, inclusive o OBS original.
 
 ## Operação
 
@@ -65,7 +62,7 @@ Esses roteiros exigem o painel local aberto; o teste de comentários também usa
 
 ## Configuração e privacidade
 
-O servidor escuta somente em loopback. A pasta `private/` armazena acesso ao OBS, sala, estado e OAuth. Os tokens Google usam DPAPI do usuário Windows; eles não podem ser simplesmente copiados para Linux. A chave de transmissão circula apenas entre o backend e o OBS.
+O servidor escuta somente em loopback. A pasta `private/` armazena acesso ao OBS, sala e estado. A configuração OAuth e os tokens Google ficam na pasta de dados do usuário, protegidos com DPAPI do Windows; eles não podem ser simplesmente copiados para outro usuário ou Linux. A chave de transmissão circula apenas entre o backend e o OBS.
 
 Credenciais, configuração do OBS, gravações, biblioteca enviada, logs, relatórios de teste e dependências compiladas estão excluídos do Git. Não exponha a porta do painel ou o WebSocket do OBS diretamente na internet. A implantação web exige autenticação e permissões no backend, além das adaptações descritas no estudo da VM.
 
