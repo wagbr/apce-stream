@@ -1,0 +1,42 @@
+[hidden]{display:none!important}
+.scheduler{padding:3px 0 20px}
+.scheduler-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:26px}
+.scheduler-heading h1{font:600 36px/1.2 'Bahnschrift','Segoe UI',sans-serif;letter-spacing:-1.4px;margin:7px 0 10px}
+.scheduler-heading h1 span{color:var(--rose)}.scheduler-heading p{color:var(--muted);margin:0}
+.scheduler-back,.scheduler-shortcut{display:inline-flex;align-items:center;gap:8px;color:var(--beige);font-size:12px;min-height:44px}
+.scheduler-shortcut .icon:last-child{width:16px;margin-left:auto}
+.output-card>.scheduler-shortcut{border-top:1px solid var(--line);width:100%;margin-top:12px;padding-top:10px}
+.scheduler-connection{display:flex;align-items:center;gap:16px;border:1px solid var(--line-strong);border-radius:var(--radius);padding:18px 22px;margin-bottom:24px;background:linear-gradient(110deg,#ef4d630d,transparent 65%),var(--surface)}
+.scheduler-channel-icon{width:44px;height:44px;border:1px solid #ef4d6335;display:grid;place-items:center;border-radius:12px;color:var(--rose-soft);background:#ef4d630b}
+.scheduler-channel{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}.scheduler-channel strong{font-size:14px;overflow-wrap:anywhere}.scheduler-channel span{color:var(--muted);font-size:12px}
+.scheduler-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(290px,1fr);gap:24px;align-items:start}
+.scheduler-form-card{padding:28px}.scheduler-form-card .card-heading{margin-bottom:26px}
+#schedule-fields{border:0;padding:0;margin:0;min-width:0}#schedule-form label:not(.thumb-picker){display:block}
+#schedule-form label[for]{margin:20px 0 7px}#schedule-form label[for=schedule-title]{margin-top:0}
+.field-count{float:right;font-size:11px;color:var(--muted);font-weight:400}
+#schedule-form input:not([type=radio]):not([type=file]),#schedule-form select,#schedule-form textarea{display:block;width:100%;min-width:0;background:#17171d;border:1px solid var(--line-strong);border-radius:9px;color:var(--text);font:14px/1.5 'Segoe UI',Arial,sans-serif;padding:11px 12px}
+#schedule-form textarea{resize:vertical;min-height:150px}textarea:focus-visible{outline:2px solid var(--rose-soft);outline-offset:4px}
+.schedule-two-fields{display:grid;grid-template-columns:1fr 1fr;gap:20px}.schedule-two-fields .hint{font-size:11px;margin:7px 0 0}
+.audience-field{padding:18px 0 0;margin:20px 0 10px;border:0;border-top:1px solid var(--line)}.audience-field legend{padding:0 10px 0 0;font-size:12px;color:var(--beige)}
+#schedule-form .audience-field label{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:400;margin:8px 0;color:var(--muted)}.audience-field input{width:17px;height:17px;min-height:0;margin:0;accent-color:var(--rose)}
+#schedule-form .thumb-picker{display:flex;align-items:center;gap:14px;background:#e6d3cb05;border:1px dashed #e6d3cb50;border-radius:12px;min-height:94px;padding:17px;cursor:pointer;position:relative}
+.thumb-picker:hover,.thumb-picker.dragging{background:#ef4d630b!important;border-color:var(--rose-soft)!important}
+.thumb-picker>span:nth-child(2){display:flex;flex-direction:column;min-width:0;gap:5px;flex:1}.thumb-picker strong{font-size:13px;overflow-wrap:anywhere}.thumb-picker small{font-size:11px;color:var(--muted);font-weight:400}.thumb-picker-icon{color:var(--beige)}
+.thumb-picker input,.oauth-import input{position:absolute;width:1px;height:1px;opacity:0;inset:50% auto auto 50%}.thumb-picker:focus-within,.oauth-import:focus-within{outline:2px solid var(--rose-soft);outline-offset:4px}
+.schedule-submit-row{display:flex;align-items:center;flex-wrap:wrap;gap:15px;margin-top:15px}.schedule-submit-row>span{font-size:10px;color:var(--muted);max-width:165px}.schedule-submit-row>button{min-height:48px;gap:12px}
+.schedule-after{border-top:1px solid var(--line);padding-top:17px;margin:22px 0 0}
+.schedule-message{font-size:12px;color:var(--beige);overflow-wrap:anywhere;line-height:1.6;margin:14px 0 0}.schedule-message:empty{display:none}.schedule-message.error,#schedule-list-message.error{color:var(--rose-soft)}
+.schedule-side{display:grid;gap:18px;min-width:0}.schedule-preview-card{padding:22px}
+.schedule-thumb-preview{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#18191e url('/assets/orbital-v2/orbital-stage-v2.webp') center/cover;margin:18px 0}
+.schedule-thumb-preview>img{height:100%;width:100%;object-fit:contain;background:#131317}.schedule-thumb-preview>div{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;height:100%;text-align:center;color:var(--beige);font-size:13px}.schedule-thumb-preview>div>.icon{width:30px;height:30px;color:var(--rose-soft)}
+.schedule-privacy-tag{position:absolute;right:10px;bottom:10px;color:var(--beige);font-size:8px;letter-spacing:1.2px;background:#17171ee8;backdrop-filter:blur(6px);padding:5px 8px;border:1px solid var(--line-strong);border-radius:4px}
+.schedule-preview-date{display:flex;align-items:center;gap:7px;color:var(--rose-soft);font-size:11px}.schedule-preview-date .icon{width:15px;height:15px}
+.schedule-preview-card h3{font-size:20px;line-height:1.35;margin:14px 0 16px;overflow-wrap:anywhere}.schedule-preview-channel{display:flex;align-items:center;gap:9px;color:var(--beige);font-size:11px}.schedule-preview-channel img{width:25px;height:25px;object-fit:contain;background:var(--beige);border-radius:50%}
+#schedule-preview-description{font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto;border-top:1px solid var(--line);padding-top:16px;margin-top:20px}.schedule-note{margin:0 8px}
+.schedule-result{border-color:#e6d3cb60}.schedule-result.pending{border-color:#ef4d6350}.schedule-result h3{font:600 22px 'Bahnschrift','Segoe UI',sans-serif;margin:0 0 10px;color:var(--beige)}.schedule-result p{font-size:12px;color:var(--muted);line-height:1.7}.schedule-result>button{margin-top:12px;width:100%;font-size:12px}.schedule-result>.text-button{display:flex;justify-content:flex-start}
+.schedule-list-heading{margin-top:35px!important}.schedule-events{display:grid;gap:12px}.schedule-empty{display:flex;align-items:center;gap:20px;border:1px dashed var(--line-strong);border-radius:14px;padding:28px;color:var(--muted)}.schedule-empty>.icon{width:32px;height:32px;color:var(--beige)}.schedule-empty strong{font-size:14px;color:var(--beige)}.schedule-empty p{font-size:12px;margin:6px 0 0}
+.scheduled-event{border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;align-items:center;gap:19px;background:var(--surface);min-width:0}.scheduled-event>img{width:138px;aspect-ratio:16/9;object-fit:contain;background:var(--ink);border-radius:6px;flex-shrink:0}.scheduled-event-info{flex:1;min-width:0}.scheduled-event-info time{font-size:11px;color:var(--rose-soft)}.scheduled-event-info h3{font-size:15px;margin:5px 0;overflow-wrap:anywhere}.scheduled-event-info p{font-size:11px;color:var(--muted);margin:5px 0}.scheduled-event-info p.scheduled-event-error{color:var(--rose-soft)}.scheduled-event-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0}.scheduled-event-actions button{font-size:11px}
+.scheduler-setup{width:min(660px,calc(100vw - 32px));max-width:660px;max-height:calc(100dvh - 40px);padding:34px;overflow-y:auto}.scheduler-setup h2{margin:9px 0 18px}
+.connection-steps{padding-left:23px!important}.connection-steps li{margin:22px 0!important;padding-left:7px}.connection-steps li::marker{color:var(--rose-soft);font-weight:700}.connection-steps p{font-size:12px;margin:5px 0 10px}.connection-steps a{color:var(--beige);text-decoration:underline;text-underline-offset:4px;font-size:12px}.connection-steps strong{color:var(--text)}
+.oauth-import{position:relative;display:inline-flex;align-items:center;gap:8px;font-size:12px;border:1px dashed var(--line-strong);padding:12px 16px;border-radius:9px;cursor:pointer;margin:0}.oauth-import:hover{border-color:var(--rose-soft)}
+.scheduler-setup-footer{border-top:1px solid var(--line);padding-top:17px;display:flex;justify-content:space-between;gap:14px;align-items:center;font-size:11px}.scheduler-setup-footer a{color:var(--beige)}

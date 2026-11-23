@@ -1,0 +1,28 @@
+{
+  "name": "estudio-apce",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {"node": ">=20.11"},
+  "scripts": {
+    "start": "node server.mjs",
+    "init:windows": "python scripts/preparar.py",
+    "test:unit": "node --test scripts/test-comments.mjs scripts/test-live-control.mjs scripts/test-media-library.mjs scripts/test-youtube-scheduler.mjs",
+    "test": "node scripts/verificar.mjs",
+    "test:youtube": "node --test scripts/test-youtube-scheduler.mjs",
+    "test:scheduler-ui": "node scripts/verificar-agendador.mjs",
+    "test:media": "node --test scripts/test-media-library.mjs",
+    "test:live": "node --test scripts/test-live-control.mjs",
+    "test:comments": "node --test scripts/test-comments.mjs",
+    "test:comments-ui": "node scripts/verificar-comentarios.mjs",
+    "test:panel": "node scripts/verificar-painel-areia.mjs"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.7",
+    "@grpc/proto-loader": "^0.8.1",
+    "obs-websocket-js": "^5.0.6"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "pluginVersion": "3.2.2",
+  "name": "APCE · Move",
+  "id": "move_transition",
+  "duration": 650,
+  "settings": {
+    "easing_match": 3,
+    "easing_in": 3,
+    "easing_out": 3,
+    "easing_function_match": 2,
+    "easing_function_in": 2,
+    "easing_function_out": 2,
+    "position_in": 0,
+    "position_out": 0,
+    "zoom_in": 100.0,
+    "zoom_out": 100.0,
+    "curve_match": 0.0,
+    "curve_in": 0.0,
+    "curve_out": 0.0,
+    "switch_percentage": 50,
+    "name_part_match": false,
+    "name_number_match": false,
+    "name_last_word_match": false,
+    "nested_scenes": false,
+    "cache_transitions": true
+  }
+}

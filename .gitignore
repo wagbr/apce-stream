@@ -1,0 +1,26 @@
+node_modules/
+obs/
+downloads/
+private/
+gravacoes/
+Biblioteca de mídias/
+vendor/
+backups/
+evidencias/
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+*.dpapi
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+client_secret*.json
+*service-account*.json
+.DS_Store
+Thumbs.db
+*.log
