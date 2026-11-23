@@ -31,4 +31,7 @@ try {
     if ($lockAcquired) { $panelMutex.ReleaseMutex() }
     $panelMutex.Dispose()
 }
-if (-not $SemAbrirNavegador) { Start-Process $panelUrl }
+if (-not $SemAbrirNavegador) {
+    . (Join-Path $studioPath 'scripts\open-browser.ps1')
+    Open-APCEBrowser $panelUrl
+}

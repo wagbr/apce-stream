@@ -17,6 +17,8 @@ Para instalar sem abrir OBS/navegador ou para apenas conferir os componentes:
 
 Após instalar, use **Abrir Painel APCE.cmd** no dia a dia. O instalador prepara a coleção inicial e a transição Move; com o OBS conectado, cria as cenas automaticamente. A primeira execução do OBS pode pedir permissões do Windows ou confirmação de configurações. Se a conexão demorar, use **Configurações → Reparar cenas** no painel. O instalador não inicia transmissão nem gravação.
 
+Quando há uma preferência de perfil Chrome salva em `%LOCALAPPDATA%\APCE Stream\browser.json`, os atalhos usam esse perfil para abrir o painel. Isso mantém o login Google no navegador da associação. Essa preferência também sobrevive à reinstalação; sem preferência válida, a aplicação usa o navegador padrão do Windows. O arquivo contém somente a escolha do navegador/perfil, sem credenciais.
+
 ## Reinstalações
 
 O instalador reaproveita componentes existentes e preserva `private/studio.json`, os perfis e as cenas já configurados. Não atualiza automaticamente um OBS existente para outra versão. Só executa o preparo inicial se faltar a configuração ou o perfil do painel. Transmissão ou gravação ativa impede a instalação.
