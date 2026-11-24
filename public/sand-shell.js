@@ -82,7 +82,7 @@ const schedulerGrid=document.querySelector('.scheduler-grid');section('agendamen
 const newLive=button('Nova transmissão','agendamento','plus');newLive.id='sand-new-live';newLive.classList.add('primary');document.querySelector('.scheduler-heading').append(newLive);
 const upload=section('upload','Adicionar mídias',[ $('library-drop'),$('library-files'),document.querySelector('.library-upload-button') ]);
 const uploadButton=button('Adicionar arquivos','upload','upload');uploadButton.id='sand-upload';uploadButton.classList.add('primary');document.querySelector('.library-heading-actions').append(uploadButton);
-const returnBox=document.createElement('div');returnBox.className='sand-return';returnBox.innerHTML='<p>Os convidados acompanham abertura, câmeras e mídias pelo retorno privado. Use fones de ouvido.</p>';
+const returnBox=document.createElement('div');returnBox.className='sand-return';returnBox.innerHTML='<p>Os convidados acompanham abertura, câmeras e mídias pelo retorno privado. Use fones de ouvido.</p><p>Ao ligar o retorno, confira os pedidos na direção. Se o OBS aguardar entrada, aprove essa fonte técnica antes de divulgar o convite. O retorno não ocupa uma das 12 vagas de pessoas.</p>';
 returnBox.append($('room-return-status'),$('room-return-start'),$('room-return-stop'));section('retorno','Retorno do estúdio',[returnBox]);
 $('room-invite').after(button('Retorno do estúdio','retorno','screen'));
 for(const hint of [document.querySelector('.studio-warning'),document.querySelector('.studio-director-header .hint')]){

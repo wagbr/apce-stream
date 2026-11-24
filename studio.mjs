@@ -10,7 +10,9 @@ export function buildLinks(cfg) {
     host:make({...common,push:cfg.host,roomkey,label:cfg.labels.host || 'Apresentador'}),
     guest:make({...common,push:cfg.guest,label:cfg.labels.guest || 'Convidado'}),
     invite:make({...common,label:''}),
-    monitor:make({view:cfg.return,scene:'',solo:'',room:cfg.room,roomkey}),
+    // O retorno nativo é um receptor direto. Tratá-lo como cena da sala
+    // exige outra admissão e pode deixar o monitor sem imagem e áudio.
+    monitor:make({view:cfg.return,solo:''}),
     hostView:make({view:cfg.host,scene:'',room:cfg.room,roomkey,solo:'',cleanoutput:'',transparent:'',obsoff:''}),
     guestView:make({view:cfg.guest,scene:'',room:cfg.room,roomkey,solo:'',cleanoutput:'',transparent:'',obsoff:''}),
     roomView:make({scene:'',room:cfg.room,exclude:cfg.return,cleanoutput:'',transparent:'',obsoff:''}),

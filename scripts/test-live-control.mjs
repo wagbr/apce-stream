@@ -12,7 +12,9 @@ function temporary(t){const base=fs.mkdtempSync(path.join(os.tmpdir(),'apce-live
 test('contrato VDO: captura é cena; convite público não recebe acesso técnico',()=>{
   const cfg={room:'room-test',password:'test-password',host:'host123',guest:'guest123',return:'return123',roomApi:'private-test-key',roomSourceKey:'private-admission-key',labels:{}};
   const links=buildLinks(cfg),params=k=>new URL(links[k]).searchParams;
-  for(const key of ['hostView','guestView','monitor']){assert(params(key).has('scene'));assert.equal(params(key).get('roomkey'),cfg.roomSourceKey);}
+  for(const key of ['hostView','guestView']){assert(params(key).has('scene'));assert.equal(params(key).get('roomkey'),cfg.roomSourceKey);}
+  assert.equal(params('monitor').get('view'),cfg.return);assert.equal(params('monitor').get('password'),cfg.password);
+  for(const key of ['room','roomkey','scene','push'])assert(!params('monitor').has(key));
   assert.equal(params('host').get('roomkey'),cfg.roomSourceKey);assert(!params('host').has('api'));
   assert(!params('invite').has('roomkey'));assert(!params('invite').has('api'));assert.equal(params('invite').get('broadcast'),cfg.return);
   assert(params('director').has('requireapproval'));assert(!params('director').has('novideo'));assert(!params('director').has('noaudio'));assert(!params('director').has('autostart'));

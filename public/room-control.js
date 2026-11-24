@@ -71,7 +71,7 @@ window.addEventListener('apce:state',event=>{
 function syncHostReturnAudio(){if(hostFrame&&state){const id=new URL(state.links.host).searchParams.get('broadcast');if(id)hostFrame.contentWindow.postMessage({volume:0,target:id},origin);}}
 setInterval(syncHostReturnAudio,2000);
 $('room-host').onclick=enterHost;document.querySelector('[data-open="host"]').onclick=enterHost;
-async function returnAction(action){const button=$('room-return-'+action);if(button)button.disabled=true;try{const s=await post('/api/room/return',{action});$('room-return-status').textContent=s.running?'Retorno privado ligado':'Retorno privado desligado';message(s.running?'Os convidados podem acompanhar o programa pelo retorno.':'Retorno desligado.');}catch(e){message(e.message,true);}finally{if(button)button.disabled=false;}}
+async function returnAction(action){const button=$('room-return-'+action);if(button)button.disabled=true;try{const s=await post('/api/room/return',{action});$('room-return-status').textContent=s.running?'Retorno privado ligado':'Retorno privado desligado';message(s.running?'Retorno ligado. Confira os pedidos na direção e aprove a entrada da fonte técnica do OBS, se solicitada. Só então confirme o retorno para os convidados.':'Retorno desligado.');}catch(e){message(e.message,true);}finally{if(button)button.disabled=false;}}
 $('room-return-start').onclick=()=>returnAction('start');$('room-return-stop').onclick=()=>returnAction('stop');
 async function poll(){
   if(pending)return;pending=true;

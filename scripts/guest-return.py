@@ -41,7 +41,7 @@ def run(command):
     tabs = [c for c in dock.descendants(control_type='TabItem') if 'Guest Return' in c.window_text()]
     if tabs: tabs[0].select()
     def controls():
-        items = {key:c for c in dock.descendants() for key in ('GuestReturnStart','GuestReturnStop','GuestReturnStatus') if c.element_info.automation_id.endswith('.'+key) or c.element_info.automation_id==key}
+        items = {key:c for c in dock.descendants() for key in ('GuestReturnStart','GuestReturnStop','GuestReturnStatus') if (c.element_info.automation_id or '').endswith('.'+key) or c.element_info.automation_id==key}
         if 'GuestReturnStart' not in items or 'GuestReturnStop' not in items:
             raise ValueError('O plugin de retorno não está disponível nesta janela.')
         return items
