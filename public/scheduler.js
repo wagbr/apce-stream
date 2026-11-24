@@ -1,4 +1,5 @@
 import {syncPanelViews} from './panel-views.js';
+import {interactionHint} from './youtube-interaction.js';
 const $=id=>document.getElementById(id);
 const icon=name=>`<svg class="icon" aria-hidden="true"><use href="/icons.svg#${name}"/></svg>`;
 document.head.insertAdjacentHTML('beforeend','<link rel="stylesheet" href="/scheduler.css">');
@@ -12,7 +13,8 @@ document.querySelector('main').insertAdjacentHTML('beforeend',`
     <form id="schedule-form"><fieldset id="schedule-fields"><label for="schedule-title">Título <span id="schedule-title-count" class="field-count">0 / 100</span></label><input id="schedule-title" name="title" required maxlength="100" placeholder="Qual conversa vamos colocar no ar?" autocomplete="off">
     <label for="schedule-description">Descrição <span id="schedule-description-count" class="field-count">0 / 5.000</span></label><textarea id="schedule-description" name="description" required maxlength="5000" rows="7" placeholder="Apresente o assunto, os participantes e os links que o público precisa conhecer."></textarea>
     <div class="schedule-two-fields"><div><label for="schedule-start">Data e horário</label><input id="schedule-start" name="startLocal" type="datetime-local" required step="60"><p class="hint">Horário de Brasília · America/Sao_Paulo</p></div><div><label for="schedule-privacy">Visibilidade</label><select id="schedule-privacy" name="privacy"><option value="public">Pública</option><option value="unlisted">Não listada</option><option value="private">Privada</option></select><p id="schedule-privacy-hint" class="hint">A chamada poderá ser vista por qualquer pessoa.</p></div></div>
-    <fieldset class="audience-field"><legend>Esta live é feita para crianças?</legend><label><input type="radio" name="audience" value="no" required>Não, não é feita para crianças</label><label><input type="radio" name="audience" value="yes" required>Sim, é feita para crianças</label></fieldset>
+    <fieldset class="audience-field"><legend>Esta live é feita para crianças?</legend><label><input type="radio" name="audience" value="no" required checked>Não, não é feita para crianças</label><label><input type="radio" name="audience" value="yes" required>Sim, é feita para crianças</label><p class="hint">Padrão das conversas da APCE. Altere se o conteúdo desta live for feito para crianças.</p></fieldset>
+    <p id="schedule-interaction-hint" class="hint" role="status"></p>
     <label for="schedule-thumb">Thumbnail</label><label class="thumb-picker" id="thumb-drop" for="schedule-thumb"><span class="thumb-picker-icon">${icon('image')}</span><span><strong id="thumb-filename">Escolha a imagem de chamada</strong><small id="thumb-meta">JPG ou PNG · até 2 MB · recomendado: 1280 × 720</small></span>${icon('plus')}<input id="schedule-thumb" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png"></label>
     </fieldset><p id="schedule-message" class="schedule-message" role="status" aria-live="polite"></p><div class="schedule-submit-row"><button id="schedule-submit" class="primary" type="submit">${icon('calendar')}Agendar no YouTube${icon('arrow')}</button><span id="schedule-draft-status">Rascunho salvo neste navegador.</span></div><p class="hint schedule-after">No dia da live, volte ao programa, selecione esta transmissão e use <strong>Iniciar transmissão</strong> no painel.</p></form>
   </article>
@@ -35,7 +37,7 @@ $('scheduler-advanced').onclick=()=>showOAuthAdministration($('scheduler-advance
 let connection=null,thumb=null,requestId=crypto.randomUUID(),sending=false,draftTimer,connectionTimer,remoteLoaded=false,result=null;
 const form=$('schedule-form');
 const privacyLabels={public:'Pública',unlisted:'Não listada',private:'Privada'};
-const privacyHints={public:'A chamada poderá ser vista por qualquer pessoa.',unlisted:'Quem tiver o link poderá acessar a chamada.',private:'A chamada fica restrita no YouTube.'};
+const privacyHints={public:'A chamada poderá ser vista por qualquer pessoa.',unlisted:'Quem tiver o link poderá assistir e participar do chat, conforme as regras do canal.',private:'A chamada fica restrita. Para testes com convidados no chat, prefira Não listada.'};
 const text=(id,value)=>$(id).textContent=value;
 const errorMessage=(id,message,error=true)=>{text(id,message);$(id).classList.toggle('error',error);};
 async function api(route,data){const r=await fetch('/api/youtube/'+route,data===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const body=await r.json();if(!r.ok)throw Error(body.error||'Não foi possível concluir a solicitação.');return body;}
@@ -48,6 +50,7 @@ async function draftStore(value){const db=await database();return new Promise((r
 async function saveDraft(){try{await draftStore({...fields(),thumb,requestId,result});text('schedule-draft-status','Rascunho salvo neste navegador.');}catch{text('schedule-draft-status','Não foi possível salvar o rascunho neste navegador.');}}
 function preview(){
   const f=fields();text('schedule-title-count',`${f.title.length} / 100`);text('schedule-description-count',`${f.description.length.toLocaleString('pt-BR')} / 5.000`);text('schedule-preview-title',f.title.trim()||'O título da sua próxima live');text('schedule-preview-description',f.description.trim()||'A descrição aparece aqui enquanto você escreve.');text('schedule-preview-privacy',privacyLabels[f.privacy].toLocaleUpperCase('pt-BR'));text('schedule-privacy-hint',privacyHints[f.privacy]);
+  text('schedule-interaction-hint',interactionHint({privacy:f.privacy,madeForKids:f.audience==='yes'}));
   let date='Escolha a data e o horário';if(f.startLocal){const [y,m,d,h,min]=f.startLocal.match(/\d+/g).map(Number);date=new Intl.DateTimeFormat('pt-BR',{timeZone:'UTC',weekday:'short',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(Date.UTC(y,m-1,d,h,min)))+' · Brasília';}text('schedule-preview-date',date);
   $('schedule-thumb-preview').hidden=!thumb;$('schedule-thumb-placeholder').hidden=!!thumb;
   if(thumb){const src=`data:${thumb.type};base64,${thumb.data}`;if($('schedule-thumb-preview').src!==src)$('schedule-thumb-preview').src=src;text('thumb-filename',thumb.name);text('thumb-meta',`${thumb.width} × ${thumb.height} · ${(thumb.size/1024/1024).toLocaleString('pt-BR',{maximumFractionDigits:2})} MB${Math.abs(thumb.width/thumb.height-16/9)>.03?' · proporção diferente de 16:9':''}`);}else{text('thumb-filename','Escolha a imagem de chamada');text('thumb-meta','JPG ou PNG · até 2 MB · recomendado: 1280 × 720');}

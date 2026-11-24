@@ -2,7 +2,7 @@ export const SCENES = Object.freeze({wait:'00 · Preparação',intro:'01 · Aber
 export const names = Object.freeze({host:'APCE · Apresentador',guest:'APCE · Convidado',room:'APCE · Sala VDO.Ninja',intro:'APCE · Abertura leve',video:'APCE · Vídeo de exibição',image:'APCE · Imagem de exibição',share:'APCE · Compartilhamento',audioScene:'APCE · Conversa'});
 export function buildLinks(cfg) {
   const make = params => 'https://vdo.ninja/?' + new URLSearchParams({...params,password:cfg.password}).toString();
-  const common = {room:cfg.room, broadcast:cfg.return, language:'pt'};
+  const common = {room:cfg.room, broadcast:cfg.return, language:'pt',maxframerate:30};
   const roomkey=cfg.roomSourceKey||cfg.roomApi||'';
   return {
     // A admissão inclui conexões técnicas. A grade do programa impõe 12 pessoas.

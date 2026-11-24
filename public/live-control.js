@@ -1,3 +1,4 @@
+import {interactionHint} from './youtube-interaction.js';
 const $=id=>document.getElementById(id);
 document.head.insertAdjacentHTML('beforeend','<link rel="stylesheet" href="/live-control.css">');
 document.querySelector('.production').insertAdjacentHTML('afterbegin',`
@@ -40,6 +41,7 @@ function confirm(action){
   $('broadcast-confirm-event').textContent=state.selected.title+' · '+privacy[state.selected.privacy];
   $('broadcast-confirm-copy').textContent=start?'A cena atual do OBS será enviada ao canal @apcedf. Confira câmera, microfones e a cena antes de continuar.':'O YouTube encerrará esta live e o OBS parará de enviar o sinal. A sala e o retorno dos convidados continuam ligados.';
   if(start&&!window.apceProductionState?.hostConnected)$('broadcast-confirm-copy').textContent+=' A direção ainda não confirmou sua câmera e microfone no estúdio. Use Entrar com câmera e microfone e confira os dispositivos e a aprovação antes de uma conversa ao vivo. Você pode iniciar só com a abertura ou mídias, se desejar.';
+  if(start)$('broadcast-confirm-copy').textContent+=' '+interactionHint(state.selected);
   $('broadcast-confirm-go').textContent=start?'Entrar ao vivo agora':'Encerrar live agora';$('broadcast-confirm').showModal();
 }
 $('broadcast-start').onclick=()=>confirm('start');$('broadcast-stop').onclick=()=>confirm('stop');

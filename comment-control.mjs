@@ -21,7 +21,7 @@ export function createCommentControl({youtube,selection,now=()=>Date.now(),lease
     if((next?.id||'')!==(target?.id||'')){
       close();target=next?.id?{...next}:null;messages=[];selected=null;status=target?'waiting':'idle';error='';pageToken='';retryAt=0;attempts=0;ended=false;revision++;
     }else if(target&&next)target={...target,...next};
-    if(target?.lifeCycleStatus==='complete'&&!ended){close();ended=true;selected=null;status='ended';revision++;}
+    if(target?.lifeCycleStatus==='complete'&&!ended){close();ended=true;selected=null;status='ended';error='';revision++;}
   }
   function ingest(batch){
     pageToken=batch.nextPageToken||pageToken;
@@ -56,9 +56,11 @@ export function createCommentControl({youtube,selection,now=()=>Date.now(),lease
     opening=true;status='connecting';lastAttempt=now();const version=generation,id=target.id;
     try{
       const item=await youtube.info(id);if(version!==generation)return;
-      if(item.status?.lifeCycleStatus==='complete'){ended=true;selected=null;status='ended';opening=false;revision++;return;}
+      target={...target,privacy:item.status?.privacyStatus||target.privacy,madeForKids:item.status?.madeForKids??item.status?.selfDeclaredMadeForKids??target.madeForKids};
+      if(item.status?.lifeCycleStatus==='complete'){ended=true;selected=null;status='ended';error='';opening=false;revision++;return;}
+      if(target.madeForKids===true){status='restricted';error='O YouTube desativa chat e comentários em lives feitas para crianças. Confira a audiência no YouTube Studio.';retryAt=now()+30000;opening=false;return;}
       const chatId=item.snippet?.liveChatId;
-      if(!chatId){status='waiting';error='O chat ainda não está disponível. Ele será conferido novamente.';retryAt=now()+30000;opening=false;return;}
+      if(!chatId){status='waiting';error='O chat ainda não está disponível. Ele será conferido novamente. Se a live estiver ativa, confira se o chat está habilitado no YouTube Studio.';retryAt=now()+30000;opening=false;return;}
       const stop=await youtube.watch({chatId,pageToken,forceToken,onReady:()=>{if(version===generation){status='connected';error='';}},onData:data=>{if(version===generation)ingest(data);},onError:e=>failed(e,version),onEnd:()=>failed(new Error('Reconectando aos comentários do YouTube…'),version)});
       if(version!==generation){stop();return;}
       cancel=stop;opening=false;forceToken=false;

@@ -14,6 +14,7 @@ import {createCommentControl} from './comment-control.mjs';
 import {persistentOAuthFile} from './oauth-storage.mjs';
 import {createOAuthBroker} from './oauth-broker.mjs';
 import {createAudioControl} from './audio-control.mjs';
+import {configureSourcePerformance,performanceSample} from './obs-performance.mjs';
 import crypto from 'node:crypto';
 
 const BASE = path.dirname(fileURLToPath(import.meta.url));
@@ -23,6 +24,7 @@ const youtubeScheduler = createYouTubeScheduler({base:BASE,port:cfg.port,authFil
 const obs = new OBSWebSocket();
 let connected = false, connecting = false, lastError = '', introArmed = false;
 let snapshot = null, snapshotAt = 0;
+let performance=null,previousStats=null,previousStream=null,performanceBusy=false;
 let commentsPrepared=false,commentsPreparing=null;
 const api = (request, data = {}) => obs.call(request, data);
 const save = () => fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2), 'utf8');
@@ -53,10 +55,15 @@ async function connect() {
     await obs.connect(`ws://127.0.0.1:${cfg.obsPort}`, cfg.obsPassword, {eventSubscriptions: 0x7ff|0x10000});
     connected = true; lastError = '';
     await audio.configure().catch(e=>{lastError=e.message;});
+    await configureSourcePerformance(api).catch(e=>{lastError=e.message;});
   } catch (e) { lastError = e.message; }
   finally { connecting = false; }
 }
-obs.on('ConnectionClosed', () => { connected = false; introArmed = false; commentsPrepared=false; });
+obs.on('ConnectionClosed', () => { connected = false; introArmed = false; commentsPrepared=false; performance=null;previousStats=previousStream=null; });
+setInterval(async()=>{
+  if(!connected||performanceBusy)return;performanceBusy=true;
+  try{const [stats,stream]=await Promise.all([api('GetStats'),api('GetStreamStatus')]);performance=performanceSample(stats,previousStats,stream,previousStream);previousStats=stats;previousStream=stream;}catch{}finally{performanceBusy=false;}
+},5000).unref();
 obs.on('InputVolumeMeters',data=>audio.receiveMeters(data));
 obs.on('MediaInputPlaybackEnded', async ({inputName}) => {
   if (inputName !== names.intro || !introArmed) return;
@@ -191,6 +198,7 @@ async function setup() {
   }
   await ensureCommentOverlay(true);
   await audio.configure();
+  await configureSourcePerformance(api);
   return {ok: true, scenes: Object.values(SCENES)};
 }
 
@@ -208,6 +216,7 @@ async function state() {
   result.hostConnected=roomState.stage.some(p=>p.id===cfg.host&&p.connected);
   result.guestConnected=roomState.stage.some(p=>p.id===(cfg.interviewGuest||cfg.guest)&&p.connected);
   result.hostInStudio=roomState.stage.some(p=>p.id===cfg.host);
+  result.performance=performance;
   if (!connected) return result;
   try {
     const [scene, stream, recording, service, hostMute, guestMute] = await Promise.all([

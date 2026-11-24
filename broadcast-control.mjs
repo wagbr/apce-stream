@@ -82,6 +82,6 @@ export function createBroadcastControl({base,youtube,api,isConnected,expectedPro
       saved.ownsIngest=false;persist();await inspect();phase=selected?.lifeCycleStatus==='complete'?'complete':'idle';return state();
     }catch(e){error=e.message;phase='error';throw e;}finally{busy=false;}
   }
-  const selection=()=>saved.id?{id:saved.id,title:selected?.title||'',lifeCycleStatus:selected?.lifeCycleStatus||''}:null;
+  const selection=()=>saved.id?{id:saved.id,title:selected?.title||'',lifeCycleStatus:selected?.lifeCycleStatus||'',privacy:selected?.privacy,madeForKids:selected?.madeForKids}:null;
   return {state,refresh,select,start,stop,selection};
 }

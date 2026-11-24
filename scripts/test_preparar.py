@@ -7,6 +7,7 @@ import json
 import pathlib
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 class PrepararTest(unittest.TestCase):
@@ -47,6 +48,10 @@ class PrepararTest(unittest.TestCase):
         ini = configparser.ConfigParser()
         ini.read(profile / 'basic.ini', encoding='utf-8')
         self.assertEqual(ini['General']['Name'], 'APCE Painel')
+        self.assertEqual(ini['Output']['Mode'], 'Advanced')
+        encoder_settings = json.loads((profile / 'streamEncoder.json').read_text(encoding='utf-8'))
+        self.assertEqual(encoder_settings['keyint_sec'], 2)
+        self.assertEqual(encoder_settings['bitrate'], 6000)
         self.assertEqual(ini['VDONinjaGuestReturn']['MaxViewers'], '16')
         self.assertEqual(ini['VDONinjaGuestReturn']['AudioTrack'], '2')
         service = json.loads((profile / 'service.json').read_text(encoding='utf-8'))
@@ -70,6 +75,21 @@ class PrepararTest(unittest.TestCase):
         self.assertEqual(settings.read_bytes(), before)
         self.assertEqual(profile.read_bytes(), original)
         self.assertEqual(collection.read_bytes(), original_collection)
+
+    def test_amd_encoder_requires_successful_native_capability_probe(self):
+        from types import SimpleNamespace
+        (self.module.OBS / 'bin/64bit/obs-amf-test.exe').touch()
+        with patch.object(self.module.subprocess, 'run', return_value=SimpleNamespace(returncode=0, stdout='[0]\nis_amd=true\nsupports_avc=true\n')):
+            self.prepare()
+        profile = self.module.CONFIG / 'basic/profiles/APCE_Painel/basic.ini'
+        ini = configparser.ConfigParser()
+        ini.read(profile, encoding='utf-8')
+        self.assertEqual(ini['SimpleOutput']['StreamEncoder'], 'amd')
+        self.assertEqual(ini['AdvOut']['Encoder'], 'h264_texture_amf')
+        with patch.object(self.module.subprocess, 'run', side_effect=OSError('fixture')):
+            self.assertEqual(self.module.stream_encoder(), 'x264')
+        with patch.object(self.module.subprocess, 'run', return_value=SimpleNamespace(returncode=0, stdout='[0]\nis_amd=false\n[1]\nis_amd=true\nsupports_avc=true\n')):
+            self.assertEqual(self.module.stream_encoder(), 'x264')
 
     def test_original_obs_auth_is_not_copied_to_panel(self):
         profile = self.module.CONFIG / 'basic/profiles/APCE'

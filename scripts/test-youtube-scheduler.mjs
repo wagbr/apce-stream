@@ -58,6 +58,16 @@ test('agenda título, descrição, Brasília, público e thumb sem iniciar trans
 test('dois cliques, nova chave e reinício não duplicam o mesmo agendamento',async t=>{
   const {scheduler:s,state,input,login,opts}=fixture(t);await login();const data=input();await s.schedule(data);await s.schedule(data);await s.schedule({...data,requestId:crypto.randomUUID()});const restarted=createYouTubeScheduler(opts);await restarted.schedule(data);assert.equal(state.inserts,1);assert.equal(state.uploads,1);
 });
+
+test('preserva privacidade e classificação infantil sem inventar um parâmetro de chat',async t=>{
+  const {scheduler:s,state,input,login}=fixture(t);await login();
+  await s.schedule({...input(),privacy:'private',madeForKids:true});
+  const body=JSON.parse(state.calls.find(c=>c.url.includes('/liveBroadcasts?')&&c.method==='POST').body);
+  assert.equal(body.status.privacyStatus,'private');assert.equal(body.status.selfDeclaredMadeForKids,true);
+  assert(!Object.hasOwn(body.contentDetails,'enableLiveChat'));
+  const event=s.live.safeEvent({id:'apceLive001',status:{privacyStatus:'private',madeForKids:true},snippet:{liveChatId:'private-id'}});
+  assert.equal(event.madeForKids,true);assert.equal(event.hasLiveChat,true);assert(!JSON.stringify(event).includes('private-id'));
+});
 test('falha de thumb preserva ID e repete somente upload após reiniciar',async t=>{
   const {scheduler:s,state,input,login,opts}=fixture(t);await login();state.thumbFail=true;const data=input(),r=await s.schedule(data);assert.equal(r.phase,'thumbnail_failed');assert.equal(r.id,'apceLive001');state.thumbFail=false;const restarted=createYouTubeScheduler(opts);const retried=await restarted.retry(data.requestId);assert.equal(retried.phase,'complete');assert.equal(state.inserts,1);assert.equal(state.uploads,2);
 });

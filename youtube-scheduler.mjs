@@ -59,7 +59,7 @@ const googleMessages={
   invalidImage:'O YouTube recusou a thumb. Escolha outro arquivo JPG ou PNG.',
   invalidTitle:'O YouTube recusou o título. Revise o texto e remova os sinais < e >.',
 };
-function safeEvent(item){return {id:item.id,title:item.snippet?.title||'',description:item.snippet?.description||'',scheduledStartTime:item.snippet?.scheduledStartTime||'',privacy:item.status?.privacyStatus||'private',lifeCycleStatus:item.status?.lifeCycleStatus||'',thumbnail:item.snippet?.thumbnails?.medium?.url||'',url:`https://www.youtube.com/watch?v=${item.id}`,studioUrl:`https://studio.youtube.com/video/${item.id}/livestreaming`};}
+function safeEvent(item){return {id:item.id,title:item.snippet?.title||'',description:item.snippet?.description||'',scheduledStartTime:item.snippet?.scheduledStartTime||'',privacy:item.status?.privacyStatus||'private',madeForKids:item.status?.madeForKids??item.status?.selfDeclaredMadeForKids??null,hasLiveChat:!!item.snippet?.liveChatId,lifeCycleStatus:item.status?.lifeCycleStatus||'',thumbnail:item.snippet?.thumbnails?.medium?.url||'',url:`https://www.youtube.com/watch?v=${item.id}`,studioUrl:`https://studio.youtube.com/video/${item.id}/livestreaming`};}
 
 export function createYouTubeScheduler({base,port,fetchImpl=fetch,clock=()=>Date.now(),protect,unprotect,watchChat=openYouTubeChat,authFile:externalAuthFile,broker=null}={}){
   const dir=path.join(base,'private/youtube'),legacyAuthFile=path.join(dir,'connection.dpapi'),authFile=externalAuthFile||legacyAuthFile,journalFile=path.join(dir,'schedules.json');

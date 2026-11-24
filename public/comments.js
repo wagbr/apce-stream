@@ -1,3 +1,4 @@
+import {interactionHint} from './youtube-interaction.js';
 document.head.insertAdjacentHTML('beforeend','<link rel="stylesheet" href="/comments.css">');
 const column=document.createElement('aside');column.className='comments-column';column.setAttribute('aria-label','Comentários do YouTube');column.id='comments-column';
 column.innerHTML=`<div class="comments-heading"><div><span class="eyebrow">A CONVERSA CONTINUA AQUI</span><h2>Comentários<span class="comments-youtube" aria-label="YouTube">▶</span></h2></div><button id="comments-close" class="icon-button" aria-label="Fechar comentários">×</button></div>
@@ -8,6 +9,8 @@ column.innerHTML=`<div class="comments-heading"><div><span class="eyebrow">A CON
 document.querySelector('.topbar').after(column);document.body.classList.add('with-comments');
 const toggle=document.createElement('button');toggle.id='comments-toggle';toggle.className='comments-toggle beige-button';toggle.textContent='Comentários';toggle.setAttribute('aria-controls',column.id);toggle.setAttribute('aria-expanded','false');document.body.append(toggle);
 const $=id=>document.getElementById(id);let state,signature='',busy=false,polling=false,serial=0;
+const chatHelp=document.createElement('p');chatHelp.className='hint';chatHelp.id='comments-participation';$('comments-error').after(chatHelp);
+const chatSettings=document.createElement('a');chatSettings.className='text-button';chatSettings.textContent='Configurar chat no YouTube ↗';chatSettings.target='_blank';chatSettings.rel='noopener noreferrer';chatSettings.hidden=true;chatHelp.after(chatSettings);
 const statuses={idle:'Aguardando uma live',waiting:'Aguardando o chat',connecting:'Conectando ao YouTube…',connected:'Conectado ao YouTube',paused:'Comentários pausados',ended:'Chat encerrado',error:'Conexão interrompida'};
 function mobileOpen(value){document.body.classList.toggle('comments-open',value);toggle.setAttribute('aria-expanded',String(value));if(value)$('comments-search').focus();}
 toggle.onclick=()=>mobileOpen(!document.body.classList.contains('comments-open'));$('comments-close').onclick=()=>mobileOpen(false);
@@ -38,8 +41,9 @@ function renderList(){
 }
 function render(s){
   state=s;
+  chatHelp.textContent=s.broadcast?(s.broadcast.privacy==='private'||s.broadcast.madeForKids?interactionHint(s.broadcast):'Chat padrão do YouTube. Entre na sua conta para comentar.'):'';chatSettings.hidden=!s.broadcast;if(s.broadcast)chatSettings.href=`https://studio.youtube.com/video/${encodeURIComponent(s.broadcast.id)}/livestreaming`;
   $('comments-event').textContent=s.broadcast?.title|| (s.broadcast?'Live selecionada':'Selecione uma live em Programa.');
-  $('comments-status').textContent=statuses[s.status]||'Aguardando comentários';$('comments-dot').classList.toggle('connected',s.status==='connected');
+  $('comments-status').textContent=s.status==='restricted'?'Chat indisponível':statuses[s.status]||'Aguardando comentários';$('comments-dot').classList.toggle('connected',s.status==='connected');
   $('comments-retry').disabled=busy||!s.broadcast||s.status==='connecting';$('comments-hide').disabled=busy||!s.selected;
   $('comments-on-screen').textContent=s.selected?'Na tela · '+s.selected.author:'Clique em uma mensagem para exibir.';$('comments-error').textContent=s.error||'';renderList();
 }

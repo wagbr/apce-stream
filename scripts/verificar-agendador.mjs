@@ -45,6 +45,12 @@ try{
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
   });
   await page.reload();await openForm();await page.locator('#schedule-submit:not([disabled])').waitFor();
+  assert.equal(await page.getByLabel('Não, não é feita para crianças',{exact:true}).isChecked(),true);
+  assert.match(await page.locator('#schedule-interaction-hint').textContent(),/ativado por padrão/);
+  await page.locator('#schedule-privacy').selectOption('private');assert.match(await page.locator('#schedule-interaction-hint').textContent(),/Não listada/);
+  await page.getByLabel('Sim, é feita para crianças',{exact:true}).check();assert.match(await page.locator('#schedule-interaction-hint').textContent(),/desativa chat/);
+  await page.getByLabel('Não, não é feita para crianças',{exact:true}).check();await page.locator('#schedule-privacy').selectOption('public');
+  mark('Chat padrão e avisos de privacidade e audiência aparecem antes do agendamento');
   await page.locator('#schedule-submit').click();assert.equal(calls.filter(c=>c.endpoint==='schedule').length,0);
   await page.locator('#schedule-title').fill('Prévia do agendador · teste local');await page.locator('#schedule-description').fill('Ciência, laicidade e boas conversas.\nEste é um ensaio local da interface; nenhum evento será publicado.');await page.locator('#schedule-start').fill(scheduledLocal);await page.getByLabel('Não, não é feita para crianças',{exact:true}).check();
   await page.locator('#schedule-thumb').setInputFiles('public/assets/orbital-v2/orbital-hero-v2.png');await page.locator('#thumb-filename').filter({hasText:'orbital-hero-v2.png'}).waitFor();

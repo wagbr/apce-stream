@@ -54,6 +54,11 @@ test('chat indisponível informa espera; erros terminais aguardam reconexão man
   const f=await fixture(t,{info:async()=>({snippet:{},status:{lifeCycleStatus:'ready'}})});assert.equal(f.control.state().status,'waiting');assert.equal(f.calls.length,0);
   const g=await fixture(t);g.calls[0].onError(chatStreamError({code:9,details:'segredo que não pode vazar'}));g.advance(120000);g.control.state();await flush();assert.equal(g.calls.length,1);assert(!g.control.state().error.includes('segredo'));
 });
+
+test('audiência infantil explica a restrição e não tenta ler um chat desativado',async t=>{
+  const f=await fixture(t,{info:async()=>({snippet:{liveChatId:'unavailable'},status:{lifeCycleStatus:'ready',madeForKids:true,privacyStatus:'public'}})});
+  assert.equal(f.control.state().status,'restricted');assert.match(f.control.state().error,/crianças/);assert.equal(f.calls.length,0);
+});
 test('mensagens preservam texto literal e emoji; foto aceita somente hosts de avatar do YouTube',()=>{
   assert.equal(avatarUrl('https://yt3.ggpht.com/foto'),'https://yt3.ggpht.com/foto');
   for(const bad of ['javascript:alert(1)','http://yt3.ggpht.com/foto','https://yt3.ggpht.com.evil.test/foto','https://127.0.0.1:3210/private'])assert.equal(avatarUrl(bad),'');

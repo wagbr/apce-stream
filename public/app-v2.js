@@ -3,6 +3,12 @@ const $=id=>document.getElementById(id);
 const icon=id=>`<svg class="icon" aria-hidden="true"><use href="/icons.svg#${id}"/></svg>`;
 const sceneLabels={wait:'Preparação',intro:'Abertura',solo:'Solo',duo:'Entrevista',room:'Sala aberta',media:'Mídia',end:'Encerramento'};
 const recordControl=$('record');recordControl.classList.remove('full');document.querySelector('.topbar-actions').insertBefore(recordControl,$('youtube'));document.querySelector('.output-heading .eyebrow').textContent='CANAL DA APCE';
+const performanceStatus=document.createElement('p');performanceStatus.id='performance-status';performanceStatus.className='hint';performanceStatus.style.cssText='padding:0 16px 12px;margin:0;overflow-wrap:anywhere';document.querySelector('.program-card').append(performanceStatus);
+function renderPerformance(p){
+  const issues={network:'Há perda de quadros no envio. Confira a conexão de internet.',encoding:'A codificação está perdendo quadros.',rendering:'A composição da cena está perdendo quadros.',ok:p?.streaming?'Envio sem perda de quadros neste intervalo.':'Sem transmissão em andamento.',waiting:'Medindo o desempenho…'};
+  performanceStatus.textContent=p?`OBS · ${p.fps} fps · CPU ${p.cpu}% · ${issues[p.issue]||issues.waiting}`:'Aguardando medição do OBS.';
+  performanceStatus.title=p?`Últimos 5 s: composição ${p.renderLoss}% · codificação ${p.encodeLoss}% · rede ${p.networkLoss}%. A prévia acima é uma foto atualizada a cada 2 s; confira o movimento no OBS.`:'';
+}
 
 function toast(message,error=false){$('toast-message').textContent=message;$('toast').classList.toggle('error',error);$('toast').dataset.visible='true';clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').dataset.visible='false',5500);}
 async function action(data){const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await r.json();if(!r.ok)throw new Error(result.error||'Não foi possível concluir esta ação.');return result;}
@@ -45,7 +51,7 @@ async function refresh(){
     $('youtube-status').textContent=linked?('Canal conectado: '+state.youtube.accountName+'. Selecione a live no controle de transmissão do painel.'):'Conecte o canal no Agendador para iniciar e encerrar pelo painel.';
     $('youtube-label').textContent=linked?'YouTube conectado':'Conectar canal';$('youtube').classList.toggle('connected',linked);$('youtube').setAttribute('aria-label',linked?'YouTube conectado ao painel':'Conectar YouTube');
     if(!state.connected){$('preview').style.display='none';$('empty').style.display='flex';}
-    window.dispatchEvent(new CustomEvent('apce:state',{detail:state}));
+    renderPerformance(state.performance);window.dispatchEvent(new CustomEvent('apce:state',{detail:state}));
   }catch(e){$('connection').textContent='Painel sem conexão';$('dot').classList.remove('ready');}
   finally{refreshPending=false;}
 }

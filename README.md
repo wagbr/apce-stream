@@ -40,6 +40,7 @@ A configuração inicial gera senhas e identificadores novos em `private/studio.
 - [Câmera, microfones e som das mídias](Áudio%20e%20câmera.md)
 - [Tema areia e painéis móveis](Painel%20areia.md)
 - [Comentários na transmissão](Comentários%20na%20transmissão.md)
+- [Desempenho e participação no YouTube](Desempenho%20e%20participação.md)
 - [Biblioteca e apresentador de slides](Biblioteca%20de%20mídias%20e%20slides.md)
 - [Configuração do Move](Move%20-%20transições%20do%20estúdio.md)
 

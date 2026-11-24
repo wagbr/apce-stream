@@ -4,6 +4,7 @@ import json
 import pathlib
 import secrets
 import shutil
+import subprocess
 import uuid
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
@@ -11,6 +12,41 @@ ROOT = BASE.parent
 OBS = BASE / 'obs'
 CONFIG = OBS / 'config' / 'obs-studio'
 PRIVATE = BASE / 'private'
+
+def stream_encoder():
+    """Usa o teste nativo do OBS; nunca presume suporte apenas pelo nome da GPU."""
+    probe = OBS / 'bin/64bit/obs-amf-test.exe'
+    if probe.is_file():
+        try:
+            result = subprocess.run([str(probe)], cwd=probe.parent, capture_output=True,
+                                    text=True, timeout=5, creationflags=0x08000000)
+            caps = configparser.ConfigParser()
+            caps.read_string(result.stdout)
+            # O perfil novo usa o adaptador 0. Uma AMD secundária não é
+            # evidência de que o OBS poderá codificar nessa mesma GPU.
+            if result.returncode == 0 and caps.has_section('0') and caps.getboolean('0', 'is_amd', fallback=False) \
+                    and caps.getboolean('0', 'supports_avc', fallback=False):
+                return 'amd'
+        except (OSError, subprocess.SubprocessError, configparser.Error):
+            pass
+    return 'x264'
+
+def panel_output_defaults(ini, profile):
+    """Configuração explícita de ingestão para o perfil controlado pelo painel."""
+    encoder = stream_encoder()
+    for section in ['Output', 'SimpleOutput', 'AdvOut']:
+        if not ini.has_section(section):
+            ini.add_section(section)
+    ini['Output']['Mode'] = 'Advanced'
+    ini['SimpleOutput']['StreamEncoder'] = encoder
+    ini['SimpleOutput']['AMDPreset'] = 'speed'
+    ini['AdvOut'].update({'Encoder': 'h264_texture_amf' if encoder == 'amd' else 'obs_x264',
+        'TrackIndex': '1', 'Track1Bitrate': '160', 'ApplyServiceSettings': 'true',
+        'RecType': 'Standard', 'RecEncoder': 'none', 'RecTracks': '1',
+        'RecFormat2': 'mkv', 'RecFilePath': str(BASE / 'gravacoes')})
+    write_json(profile / 'streamEncoder.json', {'rate_control': 'CBR', 'bitrate': 6000,
+        'keyint_sec': 2, 'preset': 'speed' if encoder == 'amd' else 'veryfast',
+        'profile': 'high', 'bf': 0, 'pre_analysis': False})
 
 def write_json(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -91,6 +127,7 @@ def prepare():
             if section == 'Auth' or section.startswith('YouTube'):
                 panel_ini.remove_section(section)
         panel_ini['General']['Name'] = 'APCE Painel'
+        panel_output_defaults(panel_ini, panel_profile)
         panel_ini['VDONinjaGuestReturn']['MaxViewers'] = '16'
         with (panel_profile / 'basic.ini').open('w', encoding='utf-8') as f:
             panel_ini.write(f, space_around_delimiters=False)
