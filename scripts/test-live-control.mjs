@@ -59,6 +59,14 @@ test('silêncio do apresentador e da entrevista acompanha o lugar no estúdio',a
   await room.action({action:'interview',id:cfg.guest});await room.setMute(cfg.guest,true);assert.equal(room.state().stage.find(p=>p.id===cfg.guest).muted,true);assert(calls.some(c=>c.name==='SetInputMute'&&c.data.inputName==='Guest'&&c.data.inputMuted));
 });
 
+test('aba sem a direção não apaga os participantes da direção conectada',async t=>{
+  const base=temporary(t),cfg={room:'room-test',password:'test-password',host:'host123',guest:'guest123',return:'return123',labels:{}};let now=10000;
+  const room=createRoomControl({base,cfg,names:{host:'Host',guest:'Guest'},api:async()=>({}),saveConfig:()=>{},now:()=>now});
+  await room.action({action:'sync',claimed:true,guests:[{id:cfg.host,label:'Apresentador'}]});
+  await room.action({action:'sync',claimed:false,guests:[]});assert(room.state().online);assert.equal(room.state().guests.length,1);assert(room.state().stage[0].connected);
+  now+=91000;assert(!room.state().online);
+});
+
 test('API Google vincula entrada, protege chave, verifica canal e não publica ao preparar',async t=>{
   const base=temporary(t),calls=[],event={id:'apceLive001',snippet:{title:'Teste',channelId:'UC_APCE'},status:{lifeCycleStatus:'ready'},contentDetails:{}};
   const protectedValue={credentials:{type:'web',client_id:'123-test.apps.googleusercontent.com',client_secret:'test-secret'},tokens:{access_token:'access-test',refresh_token:'refresh-test',expires_at:Date.now()+3600000},account:{id:'UC_APCE',handle:'@apcedf'}};

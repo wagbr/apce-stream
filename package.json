@@ -7,10 +7,11 @@
   "scripts": {
     "start": "node server.mjs",
     "init:windows": "python scripts/preparar.py",
-    "test:unit": "node --test scripts/test-comments.mjs scripts/test-live-control.mjs scripts/test-media-library.mjs scripts/test-youtube-scheduler.mjs scripts/test-oauth-broker.mjs",
+    "test:unit": "node --test scripts/test-comments.mjs scripts/test-live-control.mjs scripts/test-media-library.mjs scripts/test-youtube-scheduler.mjs scripts/test-oauth-broker.mjs scripts/test-audio-control.mjs",
     "test": "node scripts/verificar.mjs",
     "test:youtube": "node --test scripts/test-youtube-scheduler.mjs",
     "test:oauth-ui": "node scripts/test-oauth-ui.mjs",
+    "test:audio-ui": "node scripts/test-audio-ui.mjs",
     "test:scheduler-ui": "node scripts/verificar-agendador.mjs",
     "test:media": "node --test scripts/test-media-library.mjs",
     "test:live": "node --test scripts/test-live-control.mjs",

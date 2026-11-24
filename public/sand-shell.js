@@ -66,6 +66,7 @@ const tools=document.createElement('div');tools.className='sand-toolbelt';
 const audio=document.createElement('div');audio.className='sand-audio';
 for(const who of ['host','guest']){const group=document.createElement('div');group.className='sand-mic';const label=document.createElement('span');label.id='sand-'+who+'-name';label.textContent=who==='host'?'Apresentador':'Entrevista';group.append($(who+'-mute'),label);audio.append(group);}
 tools.append(audio,button('Identificação','identificacao','sliders'),button('Exibição rápida','midia','media'));
+const hostEntry=document.createElement('button');hostEntry.type='button';hostEntry.id='host-entry-shortcut';hostEntry.className='sand-tool host-entry-shortcut';hostEntry.innerHTML=icon('users')+'<span>Entrar com câmera e microfone</span>';hostEntry.onclick=()=>window.apceEnterHost?.();tools.prepend(hostEntry);
 const guestShortcut=document.createElement('a');guestShortcut.className='sand-tool';guestShortcut.href='#estudio';guestShortcut.innerHTML=icon('users')+'<span>Convidados</span><span id="sand-room-count" class="sand-count">0 / 12</span>';tools.append(guestShortcut);
 document.querySelector('.program-card').after(tools);
 const stageControls=document.createElement('section');stageControls.className='sand-stage-controls';stageControls.setAttribute('aria-label','Controles de produção');

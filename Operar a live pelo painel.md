@@ -9,9 +9,9 @@ O painel controla a produção; o OBS monta e codifica o programa; o VDO.Ninja c
 1. Na navbar, abra **Agenda → Nova transmissão**, preencha título, descrição, data/hora, visibilidade, público infantil e thumb. Envie o agendamento ao YouTube.
 2. Em **Programa**, clique na faixa **Transmissão do YouTube**, atualize a lista e selecione a live agendada. Confira o título, a visibilidade e o canal **@apcedf**. Feche o painel para voltar à mesa.
 3. Abra **Sala e convidados → Abrir sala e direção**. Mantenha essa página do painel aberta durante o evento; você pode navegar entre as seções sem fechar a direção.
-4. Use **Entrar como apresentador**. Autorize câmera e microfone, selecione os dispositivos e entre. Aprovar a entrada na direção pode ser necessário também para o apresentador.
+4. Use **Entrar com câmera e microfone**, na mesa de Programa, ou **Entrar como apresentador** na seção Convidados. A seleção abre dentro do painel. Autorize câmera e microfone, escolha os dispositivos e entre. Se necessário, use **Conferir aprovação na direção** para aprovar também o apresentador. Voltar ao painel mantém a captura conectada.
 5. Abra **Retorno do estúdio → Ligar retorno do estúdio**. Esse comando liga somente o retorno privado do plugin VDO.Ninja no OBS. Se o retorno aparecer como pedido de entrada na direção, aprove-o. Ele não ocupa lugar na grade de pessoas.
-6. Teste a câmera, os microfones e as mídias antes de entrar no ar. Use fones.
+6. Confira sua imagem na prévia. Em **Áudio e volume**, veja os medidores, teste a abertura e as mídias e ajuste mute, volume e escuta local. Use fones. Veja [Câmera, microfones e som das mídias](Áudio%20e%20câmera.md).
 
 ## Chamar pessoas pelo chat
 

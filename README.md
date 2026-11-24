@@ -8,6 +8,7 @@ Esta versão opera em **Windows com OBS local**. A migração para a nuvem está
 
 - Sete cenas: preparação, abertura leve, solo, entrevista, sala aberta, mídia e encerramento.
 - Transições com Move; identificação, microfones, prévia e gravação local.
+- Entrada de câmera/microfone dentro do painel e mixer com medidores, mute, volume e escuta local para abertura, mídias, conversa e compartilhamento.
 - Agendamento com título, descrição, horário de Brasília, visibilidade, público infantil e thumbnail.
 - Início e encerramento da live selecionada pelo painel, com confirmação.
 - Comentários do YouTube em coluna lateral e destaque sobre a transmissão.
@@ -36,6 +37,7 @@ A configuração inicial gera senhas e identificadores novos em `private/studio.
 ## Operação
 
 - [Guia completo de operação](Operar%20a%20live%20pelo%20painel.md)
+- [Câmera, microfones e som das mídias](Áudio%20e%20câmera.md)
 - [Tema areia e painéis móveis](Painel%20areia.md)
 - [Comentários na transmissão](Comentários%20na%20transmissão.md)
 - [Biblioteca e apresentador de slides](Biblioteca%20de%20mídias%20e%20slides.md)

@@ -12,7 +12,7 @@ const error=(message,status=400)=>Object.assign(new Error(message),{status});
 function atomic(file,value){fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file+'.tmp',JSON.stringify(value,null,2),'utf8');fs.renameSync(file+'.tmp',file);}
 const sameFile=(a,b)=>a&&b&&path.resolve(a).toLocaleLowerCase()===path.resolve(b).toLocaleLowerCase();
 
-export function createMediaLibrary({base,api,isConnected,scenes,names,cfg,saveConfig,python='python',prepare}={}){
+export function createMediaLibrary({base,api,isConnected,scenes,names,cfg,saveConfig,python='python',prepare,audioAction}={}){
   const root=path.join(base,'Biblioteca de mídias'),originals=path.join(root,'Arquivos'),previews=path.join(root,'Prévias'),indexFile=path.join(base,'private/media-library.json');
   fs.mkdirSync(originals,{recursive:true});fs.mkdirSync(previews,{recursive:true});
   let data={version:1,items:[],active:null,returnScene:scenes.solo};
@@ -149,8 +149,8 @@ export function createMediaLibrary({base,api,isConnected,scenes,names,cfg,saveCo
       // O reprodutor nativo busca o quadro-chave anterior, sem mudar pausa ou áudio.
       await api('SetMediaInputCursor',{inputName:names.video,mediaCursor:Math.round(input.position)});
     }else if(action==='volume'){
-      if(!Number.isFinite(input.volume)||input.volume<0||input.volume>1)throw error('Volume inválido.');await api('SetInputVolume',{inputName:names.video,inputVolumeMul:input.volume});
-    }else if(action==='mute'){if(typeof input.muted!=='boolean')throw error('Estado de áudio inválido.');await api('SetInputMute',{inputName:names.video,inputMuted:input.muted});}
+      if(!Number.isFinite(input.volume)||input.volume<0||input.volume>1)throw error('Volume inválido.');if(audioAction)await audioAction({action:'volume',channel:'video',volume:input.volume});else await api('SetInputVolume',{inputName:names.video,inputVolumeMul:input.volume});
+    }else if(action==='mute'){if(typeof input.muted!=='boolean')throw error('Estado de áudio inválido.');if(audioAction)await audioAction({action:'mute',channel:'video',muted:input.muted});else await api('SetInputMute',{inputName:names.video,inputMuted:input.muted});}
     else if(action==='loop'){if(typeof input.loop!=='boolean')throw error('Repetição inválida.');await api('SetInputSettings',{inputName:names.video,inputSettings:{looping:input.loop},overlay:true});}
     else throw error('Ação de mídia desconhecida.');
     programAt=0;return {ok:true,program:await program(true)};

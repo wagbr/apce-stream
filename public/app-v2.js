@@ -28,7 +28,7 @@ function buildScenes(){
 async function refresh(){
   if(refreshPending)return;refreshPending=true;
   try{
-    const r=await fetch('/api/state');if(!r.ok)throw Error('Sem conexão');state=await r.json();
+    const r=await fetch('/api/state');if(!r.ok)throw Error('Sem conexão');state=await r.json();window.apceProductionState=state;
     $('dot').classList.toggle('ready',state.connected);$('connection').textContent=state.connected?'OBS conectado':'OBS desconectado';
     const onAir=window.apceBroadcast?.selected?.lifeCycleStatus==='live';$('live').textContent=onAir?'Ao vivo':state.streaming?'Enviando sinal':'Fora do ar';$('live').classList.toggle('on',onAir);
     $('program-name').textContent=state.currentScene?state.currentScene.split(' · ').slice(1).join(' · '):'Estúdio em espera';

@@ -4,9 +4,13 @@ import path from 'node:path';
 const fail=message=>Object.assign(new Error(message),{status:409});
 export function createBroadcastControl({base,youtube,api,isConnected,expectedProfile,delay=ms=>new Promise(r=>setTimeout(r,ms)),attempts=24}){
   const file=path.join(base,'private/broadcast.json');
-  let saved={};try{saved=JSON.parse(fs.readFileSync(file,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
-  let busy=false,phase='idle',error='',options=[],selected=null,updated=0;
-  const persist=()=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file+'.tmp',JSON.stringify(saved),'utf8');fs.renameSync(file+'.tmp',file);};
+  let saved={},recovered=false;try{saved=JSON.parse(fs.readFileSync(file,'utf8'));if(!saved||Array.isArray(saved)||typeof saved!=='object')throw new SyntaxError('Estado inválido');}catch(e){
+    if(e instanceof SyntaxError){fs.copyFileSync(file,file+'.corrupt-'+Date.now());saved={};recovered=true;}
+    else if(e.code!=='ENOENT')throw e;
+  }
+  let busy=false,phase='idle',error=recovered?'A seleção local da última live foi recuperada após uma falha. Atualize a lista e selecione a transmissão novamente.':'',options=[],selected=null,updated=0;
+  const persist=()=>{fs.mkdirSync(path.dirname(file),{recursive:true});const fd=fs.openSync(file+'.tmp','w');try{fs.writeFileSync(fd,JSON.stringify(saved),'utf8');fs.fsyncSync(fd);}finally{fs.closeSync(fd);}fs.renameSync(file+'.tmp',file);};
+  if(recovered)persist();
   async function inspect(){
     if(saved.id){selected=youtube.safeEvent(await youtube.broadcast(saved.id));updated=Date.now();}
     return selected;

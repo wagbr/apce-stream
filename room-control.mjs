@@ -26,8 +26,11 @@ export function createRoomControl({base,cfg,api,names,saveConfig,now=()=>Date.no
   async function action(data){
     if(data.action==='sync'){
       if(!Array.isArray(data.guests)||data.guests.length>80)throw Error('Lista de participantes inválida.');
+      // Uma segunda aba pode estar apenas aguardando a posse da direção.
+      // Seu roster vazio não substitui a lista da direção que está conectada.
+      if(data.claimed===false)return state();
       const previous=guests,seen=new Set();guests=data.guests.filter(p=>valid(p.id)&&!seen.has(p.id)&&seen.add(p.id)).map(p=>({id:p.id,label:String(p.label||previous.find(g=>g.id===p.id)?.label||'Participante').slice(0,80)}));
-      heartbeat=data.claimed===false?0:now();
+      heartbeat=now();
       // O apresentador ocupa um dos mesmos doze lugares.
       for(const id of [cfg.host,cfg.guest]){
         const person=guests.find(g=>g.id===id);

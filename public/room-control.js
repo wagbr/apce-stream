@@ -46,7 +46,30 @@ window.addEventListener('message',async event=>{
 });
 $('room-open').onclick=openRoom;
 $('room-invite').onclick=async()=>{try{await navigator.clipboard.writeText(state.links.invite);message('Convite copiado. Cole no chat do YouTube para chamar participantes.');}catch(e){message(e.message,true);}};
-function enterHost(){openRoom();if(state)window.open(state.links.host,'_blank','noopener,noreferrer');}
+let hostFrame=null;
+document.body.insertAdjacentHTML('beforeend','<dialog id="host-entry" class="host-entry"><div class="host-entry-tools"><div><span class="eyebrow">SUA ENTRADA NO ESTÚDIO</span><h2>Minha câmera e microfone</h2></div><button id="host-entry-close" class="beige-button" type="button">Voltar ao painel</button></div><p>Permita câmera e microfone, escolha seus dispositivos e entre com a câmera. Se aparecer um pedido de entrada, aprove-o na direção. Você continua conectado quando volta ao painel.</p><p id="host-entry-status" class="host-entry-status" role="status">Aguardando sua entrada na sala.</p><div id="host-entry-frame"></div><button id="host-entry-leave" class="text-button" type="button">Desligar minha câmera e sair da sala</button></dialog>');
+$('host-entry-close').onclick=()=>$('host-entry').close();
+const approval=document.createElement('button');approval.type='button';approval.className='text-button';approval.textContent='Conferir aprovação na direção';approval.onclick=()=>{$('host-entry').close();location.hash='#estudio';};$('host-entry-status').after(approval);
+$('host-entry-leave').onclick=()=>{hostFrame?.contentWindow?.postMessage({hangup:true},origin);hostFrame?.remove();hostFrame=null;$('host-entry').close();};
+function enterHost(){
+  openRoom();if(!state)return;
+  if(!hostFrame){
+    hostFrame=document.createElement('iframe');hostFrame.title='Minha câmera e microfone na sala APCE';hostFrame.allow='camera; microphone; autoplay; fullscreen; display-capture';hostFrame.referrerPolicy='no-referrer';hostFrame.src=state.links.host;
+    hostFrame.onload=()=>hostFrame.contentWindow.postMessage({pauseinvisible:false},origin);
+    $('host-entry-frame').append(hostFrame);
+  }
+  $('host-entry').showModal();
+}
+window.apceEnterHost=enterHost;
+window.addEventListener('apce:state',event=>{
+  const connected=!!event.detail.hostConnected,text=connected?'Apresentador conectado ao programa. Confira sua imagem e o nível de voz.':'Câmera/microfone ainda não chegaram ao estúdio. Escolha os dispositivos, entre e confira a aprovação na direção.';
+  $('host-entry-status').textContent=text;
+  const shortcut=$('host-entry-shortcut');if(shortcut){shortcut.classList.toggle('connected',connected);shortcut.querySelector('span').textContent=connected?'Minha câmera · conectado':'Entrar com câmera e microfone';}
+});
+// O apresentador ouve as mídias diretamente pelo OBS. Mantém o vídeo do retorno
+// sem reproduzir uma segunda cópia do mesmo áudio na sua entrada VDO.Ninja.
+function syncHostReturnAudio(){if(hostFrame&&state){const id=new URL(state.links.host).searchParams.get('broadcast');if(id)hostFrame.contentWindow.postMessage({volume:0,target:id},origin);}}
+setInterval(syncHostReturnAudio,2000);
 $('room-host').onclick=enterHost;document.querySelector('[data-open="host"]').onclick=enterHost;
 async function returnAction(action){const button=$('room-return-'+action);if(button)button.disabled=true;try{const s=await post('/api/room/return',{action});$('room-return-status').textContent=s.running?'Retorno privado ligado':'Retorno privado desligado';message(s.running?'Os convidados podem acompanhar o programa pelo retorno.':'Retorno desligado.');}catch(e){message(e.message,true);}finally{if(button)button.disabled=false;}}
 $('room-return-start').onclick=()=>returnAction('start');$('room-return-stop').onclick=()=>returnAction('stop');

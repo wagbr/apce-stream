@@ -13,6 +13,7 @@ import {createRoomControl} from './room-control.mjs';
 import {createCommentControl} from './comment-control.mjs';
 import {persistentOAuthFile} from './oauth-storage.mjs';
 import {createOAuthBroker} from './oauth-broker.mjs';
+import {createAudioControl} from './audio-control.mjs';
 import crypto from 'node:crypto';
 
 const BASE = path.dirname(fileURLToPath(import.meta.url));
@@ -27,9 +28,10 @@ const api = (request, data = {}) => obs.call(request, data);
 const save = () => fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2), 'utf8');
 if(!cfg.roomApi){cfg.roomApi=crypto.randomBytes(18).toString('hex');save();}
 if(!cfg.roomSourceKey){cfg.roomSourceKey=crypto.randomBytes(18).toString('hex');save();}
-const mediaLibrary = createMediaLibrary({base:BASE,api,isConnected:()=>connected,scenes:SCENES,names,cfg,saveConfig:save});
+const mediaLibrary = createMediaLibrary({base:BASE,api,isConnected:()=>connected,scenes:SCENES,names,cfg,saveConfig:save,audioAction:data=>audio.action(data)});
 const broadcasts=createBroadcastControl({base:BASE,youtube:youtubeScheduler.live,api,isConnected:()=>connected,expectedProfile:'APCE Painel'});
 const room=createRoomControl({base:BASE,cfg,api,names,saveConfig:save});
+const audio=createAudioControl({api,isConnected:()=>connected,cfg,names,scenes:SCENES,saveConfig:save});
 const comments=createCommentControl({youtube:youtubeScheduler.chat,selection:broadcasts.selection});
 setInterval(()=>comments.tick(),2000).unref();
 
@@ -48,12 +50,14 @@ async function connect() {
   if (connected || connecting) return;
   connecting = true;
   try {
-    await obs.connect(`ws://127.0.0.1:${cfg.obsPort}`, cfg.obsPassword, {eventSubscriptions: 0x7ff});
+    await obs.connect(`ws://127.0.0.1:${cfg.obsPort}`, cfg.obsPassword, {eventSubscriptions: 0x7ff|0x10000});
     connected = true; lastError = '';
+    await audio.configure().catch(e=>{lastError=e.message;});
   } catch (e) { lastError = e.message; }
   finally { connecting = false; }
 }
 obs.on('ConnectionClosed', () => { connected = false; introArmed = false; commentsPrepared=false; });
+obs.on('InputVolumeMeters',data=>audio.receiveMeters(data));
 obs.on('MediaInputPlaybackEnded', async ({inputName}) => {
   if (inputName !== names.intro || !introArmed) return;
   introArmed = false;
@@ -161,6 +165,7 @@ async function setup() {
   await attach(SCENES.solo, names.audioScene);
   await attach(SCENES.duo, names.host, 64, 260, 880, 495);
   await attach(SCENES.duo, names.guest, 976, 260, 880, 495);
+  await attach(SCENES.duo, names.audioScene);
   await attach(SCENES.room, names.room, 64, 144, 1792, 816);
   await attach(SCENES.media, names.video, 64, 144, 1440, 810, !!cfg.mediaFile);
   await attach(SCENES.media, names.image, 64, 144, 1440, 810, !!cfg.imageFile);
@@ -185,6 +190,7 @@ async function setup() {
     }
   }
   await ensureCommentOverlay(true);
+  await audio.configure();
   return {ok: true, scenes: Object.values(SCENES)};
 }
 
@@ -198,6 +204,10 @@ async function state() {
   const result = {connected, error: connected ? '' : 'Abra o OBS APCE para conectar o painel.', scenes: SCENES, labels: cfg.labels, afterIntro: cfg.afterIntro, links: buildLinks(cfg), youtube: {service: 'YouTube - RTMPS', configured: false, accountConnected: !!channelName, channelName}, mediaFile: cfg.mediaFile || '', imageFile: cfg.imageFile || ''};
   const schedulerAccount=await youtubeScheduler.status();
   result.youtube.schedulerConnected=schedulerAccount.connected;result.youtube.accountName=schedulerAccount.account?.title||'';
+  const roomState=room.state();
+  result.hostConnected=roomState.stage.some(p=>p.id===cfg.host&&p.connected);
+  result.guestConnected=roomState.stage.some(p=>p.id===(cfg.interviewGuest||cfg.guest)&&p.connected);
+  result.hostInStudio=roomState.stage.some(p=>p.id===cfg.host);
   if (!connected) return result;
   try {
     const [scene, stream, recording, service, hostMute, guestMute] = await Promise.all([
@@ -281,6 +291,7 @@ const server = http.createServer(async (req, res) => {
         '/api/broadcast/action':d=>{const handlers={refresh:()=>broadcasts.refresh(),select:()=>broadcasts.select(d.id),start:()=>broadcasts.start(d.id),stop:()=>broadcasts.stop(d.id)};if(!handlers[d.action])throw Error('Comando de transmissão inválido.');return handlers[d.action]();},
         '/api/room/action':d=>room.action(d),
         '/api/room/return':d=>guestReturn(d.action),
+        '/api/audio/action':d=>audio.action(d),
         '/api/action':action,
         '/api/media/action':d=>mediaLibrary.control(d),
         '/api/youtube/credentials':async d=>{const result=await youtubeScheduler.importCredentials(d.credentials);comments.reset();return result;},
@@ -304,6 +315,7 @@ const server = http.createServer(async (req, res) => {
     if(url.pathname==='/api/broadcast/state')return json(res,200,await broadcasts.state());
     if(url.pathname==='/api/room/state')return json(res,200,room.state());
     if(url.pathname==='/api/room/stage')return json(res,200,room.stageState());
+    if(url.pathname==='/api/audio/state')return json(res,200,await audio.state());
     if(url.pathname==='/api/media/state')return json(res,200,await mediaLibrary.state());
     if(url.pathname==='/api/media/item')return json(res,200,mediaLibrary.detail(url.searchParams.get('id')));
     if(url.pathname==='/api/media/file')return serveMediaFile(req,res,mediaLibrary.file(url.searchParams.get('id'),url.searchParams.get('variant')||'page',Number(url.searchParams.get('page')||0)));
