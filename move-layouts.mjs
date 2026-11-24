@@ -48,7 +48,7 @@ export async function configureMove(api,scenes,names,port){
   const enterExit={position_in:10,position_out:10,zoom_in:100,zoom_out:100};
   for(const source of [names.guest,L.guestFrame,L.guestName])await override(source,enterExit);
   for(const mode of ['solo','duo','media'])for(const layer of ['Fundo','Legendas']){
-    const inputName=`APCE · ${layer} ${mode}`,current=await api('GetInputSettings',{inputName});const url=new URL(current.inputSettings.url);url.searchParams.set('native','1');await api('SetInputSettings',{inputName,inputSettings:{url:url.toString()},overlay:true});
+    const inputName=`APCE · ${layer} ${mode}`,current=await api('GetInputSettings',{inputName});if(!current.inputSettings.url)continue;const url=new URL(current.inputSettings.url);url.searchParams.set('native','1');await api('SetInputSettings',{inputName,inputSettings:{url:url.toString()},overlay:true});
   }
   return true;
 }

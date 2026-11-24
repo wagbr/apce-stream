@@ -15,6 +15,7 @@ import {persistentOAuthFile} from './oauth-storage.mjs';
 import {createOAuthBroker} from './oauth-broker.mjs';
 import {createAudioControl} from './audio-control.mjs';
 import {configureSourcePerformance,performanceSample} from './obs-performance.mjs';
+import {configureSceneBackgrounds} from './scene-backgrounds.mjs';
 import crypto from 'node:crypto';
 
 const BASE = path.dirname(fileURLToPath(import.meta.url));
@@ -161,12 +162,7 @@ async function setup() {
   await createInput(SCENES.media, names.video, 'ffmpeg_source', {is_local_file: true, local_file: cfg.mediaFile || '', looping: false, restart_on_activate: true, close_when_inactive: true}, 'both');
   await createInput(SCENES.media, names.image, 'image_source', {file: cfg.imageFile || '', unload: false});
   await createInput(SCENES.media, names.share, 'browser_source', browser(links.shareView, 1600, 900), 'both');
-  for (const [scene, mode] of [[SCENES.wait, 'wait'], [SCENES.solo, 'solo'], [SCENES.duo, 'duo'], [SCENES.room, 'room'], [SCENES.media, 'media'], [SCENES.end, 'end']]) {
-    const input = `APCE · Fundo ${mode}`;
-    await createInput(scene, input, 'browser_source', browser(`http://127.0.0.1:${cfg.port}/overlay-v2.html?mode=${mode}&layer=back`));
-    const items = await api('GetSceneItemList', {sceneName: scene});
-    await api('SetSceneItemIndex', {sceneName: scene, sceneItemId: items.sceneItems.find(i => i.sourceName === input).sceneItemId, sceneItemIndex: 0});
-  }
+  await configureSceneBackgrounds(api,{base:BASE,scenes:SCENES});
   await attach(SCENES.intro, names.intro);
   await attach(SCENES.solo, names.host, 240, 144, 1440, 810);
   await attach(SCENES.solo, names.audioScene);

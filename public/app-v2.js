@@ -23,7 +23,7 @@ function buildScenes(){
   for(const [i,[key,name]] of Object.entries(state.scenes).entries()){
     const b=document.createElement('button');b.className='scene';b.dataset.scene=name;b.dataset.layout=key;b.setAttribute('aria-label',name.replace(' · ',' '));b.title=`${sceneLabels[key]} · atalho ${i+1}`;
     const thumb=document.createElement('div');thumb.className='scene-thumb';
-    const img=document.createElement('img');img.src=`/assets/orbital-v2/scene-${key}-v2.webp`;img.alt='';img.loading='lazy';img.decoding='async';img.onerror=()=>{img.style.visibility='hidden';};
+    const img=document.createElement('img');img.src=`/assets/areia-v3/scene-${key}-v3.webp`;img.alt='';img.loading='lazy';img.decoding='async';img.onerror=()=>{img.style.visibility='hidden';};
     const num=document.createElement('span');num.className='scene-index';num.textContent=name.slice(0,2);
     const shortcut=document.createElement('kbd');shortcut.className='scene-key';shortcut.textContent=i+1;shortcut.setAttribute('aria-hidden','true');
     thumb.append(img,num,shortcut);

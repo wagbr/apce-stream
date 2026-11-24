@@ -8,7 +8,7 @@ import {SCENES} from '../studio.mjs';
 const base=path.dirname(path.dirname(fileURLToPath(import.meta.url))),url='http://127.0.0.1:3210';
 const report={date:new Date().toISOString(),simulatedWrites:true,checks:[]},calls=[];
 const note=s=>{report.checks.push(s);console.log('OK:',s);};
-const browser=await chromium.launch({channel:'msedge',headless:true});
+const browser=await chromium.launch({channel:'msedge',headless:true,args:['--mute-audio']});
 const state={connected:true,currentScene:SCENES.wait,scenes:SCENES,labels:{host:'Apresentador',guest:'Convidado',topic:''},afterIntro:SCENES.duo,hostMuted:false,guestMuted:false,recording:false,streaming:false,youtube:{schedulerConnected:true,accountName:'APCE'},links:{host:'https://example.invalid/host',guest:'https://example.invalid/guest',invite:'https://example.invalid/invite',director:'https://example.invalid/director',monitor:'https://example.invalid/return'}};
 const event={id:'apceLive001',title:'Ensaio local da interface',privacy:'private',lifeCycleStatus:'ready',scheduledStartTime:''};
 const broadcast={selected:null,options:[event],phase:'idle',busy:false,obsConnected:true,ingestOwned:false,error:''};

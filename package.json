@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.mjs",
     "init:windows": "python scripts/preparar.py",
-    "test:unit": "node --test scripts/test-comments.mjs scripts/test-live-control.mjs scripts/test-media-library.mjs scripts/test-youtube-scheduler.mjs scripts/test-oauth-broker.mjs scripts/test-audio-control.mjs scripts/test-obs-performance.mjs",
+    "test:unit": "node --test scripts/test-comments.mjs scripts/test-live-control.mjs scripts/test-media-library.mjs scripts/test-youtube-scheduler.mjs scripts/test-oauth-broker.mjs scripts/test-audio-control.mjs scripts/test-obs-performance.mjs scripts/test-scene-backgrounds.mjs",
     "test": "node scripts/verificar.mjs",
     "test:youtube": "node --test scripts/test-youtube-scheduler.mjs",
     "test:oauth-ui": "node scripts/test-oauth-ui.mjs",

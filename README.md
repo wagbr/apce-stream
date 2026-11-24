@@ -39,6 +39,7 @@ A configuração inicial gera senhas e identificadores novos em `private/studio.
 - [Guia completo de operação](Operar%20a%20live%20pelo%20painel.md)
 - [Câmera, microfones e som das mídias](Áudio%20e%20câmera.md)
 - [Tema areia e painéis móveis](Painel%20areia.md)
+- [Fundos das cenas na identidade areia, sem frases](Cenas%20areia.md)
 - [Comentários na transmissão](Comentários%20na%20transmissão.md)
 - [Desempenho e participação no YouTube](Desempenho%20e%20participação.md)
 - [Biblioteca e apresentador de slides](Biblioteca%20de%20mídias%20e%20slides.md)
